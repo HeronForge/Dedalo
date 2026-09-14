@@ -1,0 +1,308 @@
+{
+  "format": "tsw-authoring/1",
+  "stageOrder": "sequential",
+  "header": {
+    "title": "End of line test specification",
+    "company": "Acme Electronics Ltd.",
+    "product": "LCU-200 lighting control unit",
+    "documentCode": "SPC-TEST-0042",
+    "confidentiality": "Confidential – internal use",
+    "signatories": [ { "role": "Prepared by", "name": "M. Rossi" }, { "role": "Verified by", "name": "P. Bianchi" }, { "role": "Approved by", "name": "L. Verdi" } ],
+    "revision": {
+      "number": "00",
+      "date": "2026-05-12",
+      "author": "M. Rossi",
+      "reason": "Converted from SPC-TEST-0042 Rev. 07 (PDF)"
+    }
+  },
+  "description": {
+    "product": "The LCU-200 drives the exterior lighting of the vehicle.",
+    "testing": "End of line test: supply, communication and power outputs.\n\nEvery measurement is taken at room temperature."
+  },
+  "references": [
+    {
+      "key": "HW",
+      "code": "SPC-HW-0021",
+      "title": "LCU-200 hardware specification",
+      "revision": "Rev. 04"
+    }
+  ],
+  "variables": [
+    {
+      "key": "VBATT",
+      "name": "Vbatt",
+      "type": "number",
+      "unit": "V",
+      "value": "13.5",
+      "description": "Nominal supply voltage used for testing."
+    },
+    {
+      "key": "IQMAX",
+      "name": "IquiescentMax",
+      "type": "number",
+      "unit": "mA",
+      "value": "45",
+      "description": "Highest current allowed at rest."
+    }
+  ],
+  "resources": [
+    {
+      "key": "PSU",
+      "name": "Programmable DC power supply",
+      "category": "Power",
+      "characteristics": [
+        {
+          "name": "Voltage",
+          "value": "0 … 32",
+          "unit": "V"
+        },
+        {
+          "name": "Current",
+          "value": "0 … 10",
+          "unit": "A"
+        }
+      ]
+    },
+    {
+      "key": "CANIF",
+      "name": "Bench CAN interface",
+      "category": "Communication",
+      "characteristics": [
+        {
+          "name": "Channels",
+          "value": "2"
+        }
+      ]
+    }
+  ],
+  "interfaces": [
+    {
+      "key": "CAN",
+      "name": "Vehicle CAN bus",
+      "type": "CAN 2.0B",
+      "parameters": [
+        {
+          "name": "Bit rate",
+          "value": "500",
+          "unit": "kbit/s"
+        },
+        {
+          "name": "Termination",
+          "value": "120",
+          "unit": "Ω"
+        }
+      ]
+    }
+  ],
+  "commands": [
+    {
+      "key": "READ_VBAT",
+      "name": "Read supply voltage",
+      "interface": "CAN",
+      "address": "0x22 0xF1 0x90",
+      "requestFormat": "22 F1 90",
+      "responseFormat": "62 F1 90 <uint16>",
+      "encoding": "uint16, LSB = 10 mV",
+      "reference": "HW",
+      "decoding": { "formula": "uint16 × 10", "unit": "mV" }
+    }
+  ],
+  "images": [
+    {
+      "key": "BOARD",
+      "name": "LCU-200 board — component side",
+      "caption": "Contact points on the bench."
+    }
+  ],
+  "points": [
+    {
+      "key": "VBAT",
+      "name": "Battery positive",
+      "connector": "J1",
+      "pin": "1",
+      "signal": "VBAT",
+      "contactType": "Ø 2 mm spring probe",
+      "characteristics": [
+        {
+          "name": "Max current",
+          "value": "10",
+          "unit": "A"
+        }
+      ],
+      "markers": [
+        {
+          "image": "BOARD",
+          "x": 0.69,
+          "y": 0.19
+        }
+      ]
+    },
+    {
+      "key": "GND",
+      "name": "Ground",
+      "connector": "J1",
+      "pin": "2",
+      "signal": "GND",
+      "contactType": "Ø 2 mm spring probe"
+    },
+    {
+      "key": "CANBUS",
+      "name": "CAN bus (CANH/CANL)",
+      "connector": "J1",
+      "pin": "5 / 6",
+      "signal": "CANH / CANL"
+    }
+  ],
+  "stages": [
+    {
+      "key": "POWER_UP",
+      "kind": "setup",
+      "name": "Power up",
+      "description": "Bring the unit to its nominal supply voltage and leave it powered.",
+      "heldStimuli": [
+        {
+          "step": "APPLY_SUPPLY",
+          "note": "the unit stays powered for whoever called this stage"
+        }
+      ],
+      "tests": [
+        {
+          "name": "Supply",
+          "purpose": "Apply the supply and let the unit start.",
+          "steps": [
+            {
+              "key": "APPLY_SUPPLY",
+              "description": "Power the unit at the nominal test voltage.",
+              "wait": {
+                "value": "2",
+                "unit": "s"
+              },
+              "stimulus": {
+                "description": "Apply the supply voltage",
+                "points": [
+                  "VBAT",
+                  "GND"
+                ],
+                "resource": "PSU",
+                "parameters": [
+                  {
+                    "name": "Voltage",
+                    "value": "$Vbatt",
+                    "unit": "V"
+                  },
+                  {
+                    "name": "Current limit",
+                    "value": "5",
+                    "unit": "A"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "STG_POWER",
+      "kind": "test",
+      "name": "Set-up and power-up",
+      "description": "Power the unit up and check the quiescent current.",
+      "tests": [
+        {
+          "name": "Supply and current draw",
+          "purpose": "Check the unit powers up within the quiescent current limit.",
+          "steps": [
+            {
+              "description": "Power the unit up.",
+              "callStage": "POWER_UP"
+            },
+            {
+              "description": "Measure the current drawn at rest.",
+              "measurement": {
+                "description": "Supply current",
+                "points": [
+                  "VBAT"
+                ],
+                "resource": "PSU",
+                "expected": {
+                  "min": "0",
+                  "max": "$IquiescentMax",
+                  "unit": "mA"
+                }
+              }
+            },
+            {
+              "description": "Ask the unit for its supply voltage and check the answer.",
+              "type": "stimulusMeasurement",
+              "note": "TO CHECK: the source does not give a tolerance for this reading.",
+              "stimulus": {
+                "description": "Send the read request",
+                "points": [
+                  "CANBUS"
+                ],
+                "resource": "CANIF",
+                "command": "READ_VBAT"
+              },
+              "measurement": {
+                "description": "Supply voltage reported by the unit",
+                "points": [
+                  "CANBUS"
+                ],
+                "resource": "CANIF",
+                "command": "READ_VBAT",
+                "expected": {
+                  "nominal": "$Vbatt",
+                  "tolerance": "5",
+                  "toleranceType": "percent",
+                  "unit": "V"
+                }
+              }
+            },
+            {
+              "description": "Read the supply voltage at three supply levels.",
+              "type": "table",
+              "wait": { "value": "1", "unit": "s" },
+              "table": {
+                "columns": [
+                  { "key": "VSUP", "kind": "stimulus", "name": "Supply", "unit": "V", "points": ["VBAT", "GND"], "resource": "PSU" },
+                  { "key": "VREAD", "kind": "measurement", "name": "Reported voltage", "unit": "V", "command": "READ_VBAT" }
+                ],
+                "rows": [
+                  { "label": "low", "cells": { "VSUP": "9", "VREAD": "9 ±5%" } },
+                  { "label": "nominal", "cells": { "VSUP": "$Vbatt", "VREAD": "$Vbatt ±5%" } },
+                  { "label": "high", "cells": { "VSUP": "16", "VREAD": "16 ±5%" } }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variants": [
+    {
+      "key": "V12",
+      "name": "LCU-200 12 V",
+      "description": "Base version."
+    },
+    {
+      "key": "V24",
+      "name": "LCU-200 24 V",
+      "description": "Commercial vehicles.",
+      "variableValues": {
+        "Vbatt": "27",
+        "IquiescentMax": "30"
+      }
+    }
+  ],
+  "conversion": {
+    "source": "SPC-TEST-0042 Rev. 07 (PDF, 12 pages)",
+    "leftOut": [
+      {
+        "where": "§ 3, Figure 1",
+        "what": "the drawing of the bench with the probe positions",
+        "why": "a picture; declared as image BOARD, to be uploaded and marked by hand"
+      }
+    ]
+  }
+}

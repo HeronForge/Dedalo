@@ -1,0 +1,345 @@
+/* Look of the document: identical on screen and in print.
+   Everything here is tuned for density — a test specification is read at the bench,
+   not admired, and every saved page is one less page to leaf through. */
+
+/* Two families, one role each: the serif is the document, the sans is what surrounds it
+   (running lines, small technical labels). The company name belongs to the document. */
+:root {
+  --doc-serif: "Georgia", "Cambria", "Times New Roman", serif;
+  --doc-sans: "Segoe UI", Arial, sans-serif;
+}
+
+.document {
+  font-family: var(--doc-serif);
+  font-size: 9.6pt;
+  line-height: 1.34;
+  color: #14181d;
+}
+.document p { margin: 0 0 4pt; }
+
+/* Repeated elements: hidden in the flow, paged.js picks them up for header and footer. */
+.run-header, .run-footer { display: none; }
+.pagedjs_margin-content .run-header,
+.pagedjs_margin-content .run-footer { display: flex; }
+
+/* The pagination engine hands the running elements to the margin boxes as blocks: without
+   !important the logo would sit above the text instead of beside it. */
+.pagedjs_margin-content .run-header,
+.pagedjs_margin-content .run-footer { display: flex !important; }
+.run-header { align-items: center; gap: 3mm; width: 100%; height: 100%; font-family: var(--doc-sans); }
+/* The logo sits beside the text and never sets the height of the header: whatever its
+   proportions, it is fitted into the two lines that are already there. */
+.run-logo { max-height: 6.6mm; max-width: 26mm; object-fit: contain; flex: none; }
+.run-text { line-height: 1.15; min-width: 0; flex: 1; }
+/* The mark of the tool, at the right end of the header: the height of the two lines, greyed. */
+.run-mark { max-height: 6.6mm; max-width: 8mm; object-fit: contain; flex: none; margin-left: auto; opacity: .6; filter: grayscale(1); }
+.run-company { font-family: var(--doc-serif); font-size: 9pt; font-weight: 600; letter-spacing: .02em; }
+.run-title { font-size: 7.5pt; color: #55606b; }
+.run-footer {
+  align-items: baseline; justify-content: space-between; width: 100%;
+  font-family: var(--doc-sans); font-size: 7.5pt; color: #55606b; gap: 6mm;
+}
+.run-doc { white-space: nowrap; }
+.run-doc .run-code { font-weight: 600; color: #35424f; }
+.run-conf { font-weight: 600; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; }
+
+/* ---- cover ---- */
+.doc-cover { text-align: center; padding-top: 10mm; }
+.cover-logo { max-height: 20mm; margin-bottom: 6mm; }
+.cover-company { font-family: var(--doc-serif); font-size: 12pt; letter-spacing: .06em; text-transform: uppercase; color: #45525f; }
+.cover-title { font-size: 24pt; line-height: 1.15; margin: 5mm 0 2mm; }
+.cover-product { font-size: 12pt; color: #45525f; }
+.cover-variant { margin-top: 2mm; font-size: 10.5pt; color: #7a4a12; }
+.cover-data, .cover-signatures { margin: 8mm auto 0; width: 78%; }
+/* The disclaimer closes the cover: small, boxed, and impossible to mistake for the document. */
+.cover-disclaimer {
+  margin: 10mm auto 0; width: 78%; text-align: left;
+  font-family: var(--doc-sans); font-size: 7.6pt; line-height: 1.35; color: #45525f;
+  border: 0.4pt solid #c3ccd6; background: #f7f9fc; padding: 2.5mm 3mm;
+}
+.cover-disclaimer p { margin: 0 0 1.5mm; }
+.cover-disclaimer p:last-child { margin-bottom: 0; }
+/* The colophon of the cover: «Powered by» and the logo under it, centred. */
+.cover-mark { margin-top: 10mm; text-align: center; }
+.cover-mark-label { font-family: var(--doc-sans); font-size: 7.5pt; color: #7a8592; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 1.5mm; }
+.cover-mark img { width: 42mm; display: block; margin: 0 auto; }
+.cover-signatures .signature-row td { height: 15mm; vertical-align: bottom; color: #7a8592; font-size: 8pt; }
+
+/* ---- headings ---- */
+.doc-h2 { font-size: 13pt; margin: 0 0 3mm; padding-bottom: 1mm; border-bottom: 1pt solid #b9c0c8; }
+.doc-h3 { font-size: 11pt; margin: 4mm 0 1.5mm; }
+.doc-h4 { font-size: 9.8pt; margin: 3mm 0 1mm; color: #24303c; }
+.doc-chapter { margin-bottom: 5mm; }
+.doc-sub { margin-bottom: 4mm; }
+.doc-empty { color: #7a8592; font-style: italic; }
+.doc-hint { font-size: 8.5pt; color: #55606b; margin-bottom: 2mm; }
+.doc-note { font-size: 8.2pt; color: #45525f; background: #f4f7fa; border-left: 2pt solid #b9c0c8; padding: 1.5mm 2.5mm; margin: 2mm 0; }
+/* A test somebody follows line-side. */
+.kpi-badge {
+  font-family: var(--doc-sans); font-size: 6.6pt; font-weight: 700; letter-spacing: .05em;
+  background: #10559a; color: #fff; border-radius: 1mm; padding: 0 1.2mm; margin-left: 1.5mm;
+  vertical-align: 0.4mm;
+}
+.doc-purpose { font-weight: normal; font-style: italic; color: #55606b; font-size: 9pt; }
+
+/* One compact line for the stage constraints, in place of a three row table. */
+.doc-meta {
+  font-family: var(--doc-sans); font-size: 8.4pt; color: #35424f;
+  background: #f4f7fa; border-left: 2pt solid #b9c0c8; padding: 1.2mm 2.5mm; margin: 1.5mm 0 2.5mm;
+}
+.doc-meta-setup { background: #f3f0fa; border-left-color: #5b4b9a; }
+.meta-item { display: inline; }
+.meta-item + .meta-item::before { content: ' · '; color: #9aa5b1; }
+.meta-label { font-weight: 600; }
+
+/* ---- table of contents ---- */
+.doc-toc li { margin: 0.6mm 0; }
+.doc-toc a { text-decoration: none; color: inherit; display: block; }
+.doc-toc .toc-num { display: inline-block; min-width: 15mm; padding-right: 3mm; color: #45525f; }
+.toc-l2 { padding-left: 8mm; font-size: 9pt; }
+
+/* ---- tables ---- */
+.doc-table {
+  width: 100%; border-collapse: collapse; margin: 1.5mm 0 3mm;
+  font-size: 8.2pt; font-family: var(--doc-sans); line-height: 1.25;
+}
+.doc-table th, .doc-table td { border: 0.4pt solid #9aa5b1; padding: 0.9mm 1.6mm; text-align: left; vertical-align: top; }
+.doc-table thead th { background: #e7ecf2; }
+.doc-table tbody tr:nth-child(even) { background: #fafbfd; }
+.doc-table-steps .col-code { width: 19mm; }
+/* Lists inside a table cell: the reader is counting things, so they are listed, not run
+   together with separators. reset.css strips the markers, they are put back here. */
+.doc-table .cell-list { margin: 0; padding-left: 4.5mm; }
+.doc-table .cell-list li { list-style: decimal; margin: 0.2mm 0; }
+.doc-table .cell-list-bullets li { list-style: disc; }
+.doc-table .cell-note { color: #55606b; font-style: italic; margin-top: 0.4mm; }
+.doc-table .code, .document .code { font-family: Consolas, "Courier New", monospace; font-size: 7.8pt; color: #10559a; }
+/* A code must never be broken over two lines: it is read as one token. */
+.doc-table td.code, .doc-table .col-code-nowrap, .doc-table-steps .col-code { white-space: nowrap; }
+.center { text-align: center; }
+
+/* ---- steps ---- */
+.step-descr { font-weight: 600; }
+.step-kind { font-size: 6.8pt; color: #7a8592; letter-spacing: .04em; }
+
+/* What is applied to the unit and what is read back from it must never be confused:
+   each line opens with its own label and carries its own colour band. */
+.step-line { margin-top: 0.6mm; padding-left: 2mm; border-left: 1.2pt solid transparent; }
+.step-line-stim { border-left-color: #b26a12; }
+.step-line-meas { border-left-color: #1d6b32; }
+.step-line-call { border-left-color: #5b4b9a; }
+.step-tag {
+  font-family: var(--doc-sans); font-size: 6.6pt; font-weight: 700;
+  letter-spacing: .06em; padding: 0 1mm; border-radius: 0.8mm; color: #fff; vertical-align: 1.5px;
+}
+.step-tag-stim { background: #b26a12; }
+.step-tag-meas { background: #1d6b32; }
+/* Over a bus, not on a pad: a command writes (SET) or reads (GET), and wears its own colour
+   so it can be picked out of a page of probing. */
+.step-tag-set { background: #0f6b7d; }
+.step-tag-get { background: #8a2f5f; }
+.step-tag-call { background: #5b4b9a; }
+/* The wait is an instruction like the others, and only appears when there is one. */
+.step-tag-wait { background: #55606b; }
+.step-tag-computed { background: #3a5a8c; }
+/* The figure a step points at: small, under the criterion, the code as its caption. */
+.step-figure { margin: 1.2mm 0 0; text-align: center; }
+.step-figure img { max-height: 22mm; max-width: 100%; border: 0.4pt solid #b9c0c8; display: block; margin: 0 auto; }
+.step-figure figcaption { font-size: 7.4pt; margin-top: 0.4mm; }
+.step-figure-missing { font-size: 7.4pt; color: #8c2020; }
+.step-formula { font-family: Consolas, "Courier New", monospace; font-size: 7.8pt; }
+.step-line-wait { color: #45525f; }
+
+/* Where the bench touches the unit: set apart from the instruments and the commands, because
+   it is the part somebody has to find on the board. */
+/* The contacts start a line of their own: they are what the operator looks for, and they
+   were being read as the tail of the sentence above them. */
+.step-at { display: block; margin-top: 0.6mm; }
+.step-at-inner { background: #e6f1fb; border-radius: 1mm; padding: 0 1mm; font-size: 8.5pt; }
+/* The settings the instrument is driven with: the same treatment as the places, in another
+   colour, because they are the other thing one checks before pressing start. */
+.step-param { background: #fbf0dc; border-radius: 1mm; padding: 0 1mm; margin-left: 1mm; font-size: 8.5pt; }
+.step-param .param-name { color: #7a4a12; }
+/* The arguments of a command belong to the command, and take its colour. */
+.param-set { background: #e2f1f4; }
+.param-set .param-name { color: #0f5a69; }
+.param-get { background: #f7e6ef; }
+.param-get .param-name { color: #7a2853; }
+.step-at-inner .ref-code { font-size: 7.4pt; }
+.at-sign { color: #10559a; font-weight: 700; }
+.col-expected { width: 34mm; }
+/* What kind of answer a criterion judges: a grey plate under the value, centred, and one
+   line more only when case does not matter. No colour — the page spends its colour where it
+   carries meaning, and a fourth palette here would carry none. */
+/* The criterion sits in the middle of its cell, with the plate under it: the column is read
+   down the page, and a value hanging in a corner is read as belonging to the line above. */
+.doc-table-steps td.col-expected { vertical-align: middle; text-align: center; }
+.doc-table-steps th.col-expected { text-align: center; }
+.expected-cell { display: block; text-align: center; }
+.kind-tag {
+  display: block; width: fit-content; margin: 1.4mm auto 0;
+  font-family: var(--doc-sans); font-size: 6.4pt; font-weight: 700; letter-spacing: .04em;
+  background: #e7ebef; color: #45525f; border: 0.3pt solid #cdd5dd; border-radius: 0.8mm;
+  padding: 0 1.2mm;
+}
+.kind-note {
+  display: block; text-align: center; margin-top: 0.4mm;
+  font-family: var(--doc-sans); font-size: 6.6pt; color: #7a8592;
+}
+.doc-table-steps .col-expected { font-size: 8.6pt; }
+/* A table step: code and kind at the left, in the width the code column has on every other
+   row, the description beside them; the table under both, and no line spent on either. */
+.table-step-head { display: flex; align-items: flex-start; gap: 2mm; }
+.table-step-code { flex: none; width: 17mm; white-space: nowrap; }
+.table-step-text { flex: 1; min-width: 0; }
+.table-step-text .step-line-wait { margin-top: 0.3mm; }
+
+/* The revision matrix: the place on the left, one column per revision, the kind in colour. */
+.doc-table-matrix { font-size: 7.8pt; }
+.doc-table-matrix .matrix-where { width: 52mm; }
+.doc-table-matrix .matrix-col { text-align: center; }
+.doc-table-matrix .matrix-col-date { font-weight: normal; font-size: 6.8pt; color: #55606b; }
+.doc-table-matrix .matrix-col-draft { font-style: italic; }
+.doc-table-matrix .matrix-chapter th { background: #eef1f5; font-family: var(--doc-sans); font-size: 7.2pt; letter-spacing: .04em; text-transform: uppercase; color: #45525f; }
+.doc-table-matrix .matrix-empty { background: #fafbfc; }
+.document-screen .doc-table-matrix .matrix-cell { cursor: help; }
+.doc-table-matrix .matrix-added { background: #eaf7ee; }
+.doc-table-matrix .matrix-changed { background: #fdf6e6; }
+.doc-table-matrix .matrix-removed { background: #fceaea; }
+.doc-table-matrix .matrix-moved { background: #efeff9; }
+.doc-table-matrix .tag { font-size: 6.4pt; text-transform: uppercase; letter-spacing: .04em; border-radius: 0.8mm; padding: 0 0.8mm; font-family: var(--doc-sans); }
+.doc-table-matrix .tag-added { background: #1d6b32; color: #fff; }
+.doc-table-matrix .tag-changed { background: #b26a12; color: #fff; }
+.doc-table-matrix .tag-removed { background: #8c2020; color: #fff; }
+.doc-table-matrix .tag-moved { background: #5b4b9a; color: #fff; }
+.matrix-pointer { margin-top: 1.5mm; }
+/* What is said to the software — a command and its arguments — in the software's font: a
+   monospace, slanted, in the colour of its command, so a line that mixes a probe and a
+   message tells the two apart before it is read. A monospace alone, at this size, did not. */
+.sw, .sw .ref-name, .param-set, .param-get {
+  font-family: Consolas, "Courier New", monospace; font-size: 8.2pt; font-style: italic; font-weight: 600;
+}
+.step-line-set .sw .ref-name { color: #0f5a69; }
+.step-line-get .sw .ref-name { color: #7a2853; }
+.grid-col .sw .ref-name { color: #45525f; }
+.doc-table-glossary .col-term { width: 30mm; font-weight: 600; }
+.step-params { color: #45525f; }
+.step-note { font-style: italic; color: #55606b; margin-top: 0.4mm; }
+.step-expected strong { color: #14181d; }
+
+/* A reference carries its code and the name of what it points at, so the reader
+   does not have to jump to the appendix to know what AP-01 is. */
+.ref { text-decoration: none; color: #10559a; white-space: nowrap; }
+.ref-code { font-family: Consolas, "Courier New", monospace; font-size: 7.8pt; border-bottom: 0.4pt dotted #10559a; }
+.ref-name { color: #35424f; }
+
+/* What a version changed: a pin in the margin and a light wash over the whole width of what
+   changed. The pin alone was easy to miss in a page of tables. */
+.diff-mark { position: relative; }
+/* The page keeps its paper: what marks a change is a bar in the margin, thick enough to
+   find while scrolling and coloured enough to tell the two kinds apart. */
+.document-screen .diff-mark::after {
+  content: ''; position: absolute; left: -2mm; top: 0; bottom: 0;
+  border-left: 2.6pt solid #e08a1e;
+}
+.document-screen .diff-added::after { border-left-color: #1d9e4b; }
+.diff-pin {
+  position: absolute; left: -5.2mm; margin-top: -0.2mm;
+  width: 4mm; height: 4mm; padding: 0; border-radius: 50%;
+  border: 0.4pt solid #b9c0c8; background: #fdf0d5; color: #7a4a12;
+  font: 700 7pt/1 var(--doc-sans); cursor: pointer;
+}
+.diff-pin-added { background: #dff3e2; color: #1d6b32; border-color: #a9d8b8; }
+.diff-pin:hover { filter: brightness(0.94); }
+.doc-table td .diff-pin { left: -5mm; }
+
+/* The selector in the revision history, and what the reader is looking at. */
+.col-pick { width: 10mm; text-align: center; }
+.rev-reading > td { background: #eef4fb; font-weight: 600; }
+.rev-baseline > td { background: #f7f9fc; color: #55606b; }
+.rev-caption { margin-top: 1.5mm; }
+.pin-sample { position: static; display: inline-block; vertical-align: middle; margin: 0 1px; }
+
+.variant-shown { background: #eef4fb; }
+.variant-out { color: #b3261e; }
+
+/* ---- figures with markers ---- */
+.doc-figure { margin: 3mm 0; }
+.doc-figure-canvas { position: relative; display: inline-block; max-width: 100%; }
+.doc-figure-canvas img { display: block; max-width: 100%; max-height: 95mm; }
+/* Short labels on the image: the number of the point, or its TP name when it has one. */
+.doc-marker {
+  position: absolute; transform: translate(-50%, -50%);
+  background: #d4342a; color: #fff; font-family: Consolas, monospace; font-size: 6.6pt;
+  min-width: 4.2mm; text-align: center;
+  padding: 0 0.6mm; border-radius: 50%; border: 0.4pt solid #fff; white-space: nowrap;
+}
+/* A TP name does not fit in a circle: it gets a pill. */
+.doc-marker-wide { border-radius: 1mm; padding: 0 1mm; }
+/* The refusal, under the answer it replaces. */
+.cmd-defined { margin-top: 0.6mm; font-size: 7.2pt; color: #55606b; }
+.cmd-decoding { margin-top: 0.8mm; font-size: 7.4pt; color: #45525f; }
+.cmd-decoding-tag { font-weight: 600; text-transform: uppercase; letter-spacing: .04em; font-size: 6.6pt; color: #55606b; }
+.cmd-negative { margin-top: 0.8mm; color: #8c2020; }
+.cmd-negative-tag {
+  font-family: var(--doc-sans); font-size: 6.4pt; font-weight: 700; letter-spacing: .04em;
+  background: #fbe0e0; border-radius: 1mm; padding: 0 1mm;
+}
+.col-time { white-space: nowrap; text-align: right; }
+
+.doc-figure figcaption { font-size: 8.2pt; color: #45525f; margin-top: 1mm; font-family: var(--doc-sans); }
+
+/* ---- graph in the appendix ---- */
+.doc-graph { margin: 2mm 0; }
+.doc-graph .graph { max-width: 100%; }
+
+/* ---- on screen preview ---- */
+.document-screen { max-width: 190mm; margin: 0 auto; font-size: 11.5px; }
+.document-screen .doc-cover { border-bottom: 1px dashed #c3ccd6; padding-bottom: 6mm; margin-bottom: 6mm; }
+.document-screen .doc-toc a::after { content: ''; }
+.document-screen .ref:hover .ref-code { background: #e3eefa; }
+/* A reference that leads into the editor rather than to a card: same colour, a dotted
+   underline of its own, so the two kinds of click are told apart before they happen. */
+.ref-edit { border-bottom: 0.4pt dotted #10559a; }
+/* A code printed where its entity is defined: it looks like the code it is, and is a way in. */
+.ref-def { color: inherit; border-bottom-color: #9aa5b1; }
+.document-screen .ref-def:hover { color: #10559a; background: #e3eefa; }
+.ref-value { color: inherit; border-bottom: 0.4pt dotted #7a8592; }
+
+/* What changes from one variant to the next.
+   The text itself, in an electric blue nothing else on the page wears: among the muted codes,
+   the tags and the plates it is found at a glance, which is the point — a limit that is not
+   the same for every product must not be read as if it were. It is a screen mark: on paper the
+   document is one product and prints as such. A click opens the value of every version. */
+.document-screen .varies,
+.document-preview-inline .varies { color: #0a2cff; }
+.document-screen .varies { cursor: pointer; }
+.document-screen .varies .ref-def,
+.document-screen .varies .ref-name { color: inherit; }
+.document-screen .varies:hover,
+.document-preview-inline .varies:hover { text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 2px; }
+/* Already dotted because it comes from a variable: the dots take the blue too. */
+.document-screen a.varies { border-bottom-color: currentColor; }
+
+/* The matrix of a table step: the label column set apart, the cells centred, the criteria
+   in the same weight the acceptance column gives them. */
+.step-grid { margin-top: 1mm; }
+.doc-table-grid { margin: 0.6mm 0 0.6mm; font-size: 7.8pt; }
+.doc-table-grid th.grid-col { font-weight: 600; text-align: center; vertical-align: top; }
+.doc-table-grid .grid-col-refs { font-weight: normal; font-size: 7pt; color: #55606b; margin-top: 0.3mm; }
+.doc-table-grid .grid-label { font-weight: 600; white-space: nowrap; width: 1%; }
+.doc-table-grid .grid-cell { text-align: center; vertical-align: middle; }
+/* In the cells of a table step the plate follows the value on the same line: the rows are
+   many and short, and a second line in every cell doubled the height of the table. */
+.doc-table-grid .grid-cell-expected strong { display: inline; }
+.doc-table-grid .expected-inline { white-space: nowrap; }
+.doc-table-grid .kind-tag-inline { display: inline-block; margin: 0 0 0 1mm; vertical-align: 0.4pt; }
+.doc-table-grid .kind-tag { display: inline-block; margin-top: 0.3mm; }
+
+/* Ten columns on a portrait sheet. What keeps a reference on one line elsewhere pushed this
+   table past the edge of the page; here references wrap and long tokens may break. */
+#app-commands .ref { white-space: normal; }
+#app-commands .doc-table td { overflow-wrap: anywhere; }
+.document-screen .ref-value:hover { background: #e3eefa; }
+.document-screen .ref-edit:hover { background: #e3eefa; }
+.ref-edit:hover { cursor: pointer; }

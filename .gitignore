@@ -1,0 +1,12 @@
+node_modules/
+dist/
+
+# working material not part of the published project (for now)
+LandingPage/
+_Inbox/
+_outbox/
+TODO.txt
+
+# OS/editor cruft
+.DS_Store
+Thumbs.db

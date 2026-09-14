@@ -1,0 +1,20 @@
+{
+  "name": "dedalo",
+  "version": "1.37.0",
+  "description": "Test specification editor for electronic devices, in a single self-contained HTML file",
+  "license": "MIT",
+  "author": "D. Tracchi",
+  "contributors": [
+    "Claude (Anthropic) — development assistant"
+  ],
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "build": "node build/build.mjs",
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "pagedjs": "^0.4.3"
+  }
+}

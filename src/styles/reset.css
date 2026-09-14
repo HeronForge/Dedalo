@@ -1,0 +1,8 @@
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body { font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 14px; color: #1c2530; background: #eef1f5; }
+h1, h2, h3, h4, p, ul, ol, figure { margin: 0; }
+ul, ol { padding: 0; list-style: none; }
+button, input, select, textarea { font: inherit; color: inherit; }
+img { max-width: 100%; }
+a { color: #10559a; }

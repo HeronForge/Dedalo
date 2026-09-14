@@ -1,0 +1,67 @@
+/* Printing: the pages are already composed by paged.js, the browser only has to
+   reproduce them. The stylesheet with the full @page rules lives in print/paged-style.js
+   and is handed to the pagination engine, not applied by the browser directly. */
+@page { size: A4; margin: 0; }
+
+body.print-mode { background: #4a5560; overflow: auto; }
+body.print-mode #tsw-root { display: none; }
+
+.print-container { padding: 24px 0 96px; }
+
+/* A named page with its own size — the landscape appendices — gets it from paged.js as
+   the page box only; the sheet, the area and the margin boxes still read the default. */
+.pagedjs_page.pagedjs_landscape_page {
+  --pagedjs-width: var(--pagedjs-pagebox-width);
+  --pagedjs-height: var(--pagedjs-pagebox-height);
+  --pagedjs-width-left: var(--pagedjs-pagebox-width);
+  --pagedjs-height-left: var(--pagedjs-pagebox-height);
+  --pagedjs-width-right: var(--pagedjs-pagebox-width);
+  --pagedjs-height-right: var(--pagedjs-pagebox-height);
+}
+/* The browser's own print is one paper size for the whole job: a document that asks for a
+   landscape sheet among portrait ones came out scaled and huddled at the left. So every
+   printed page is a portrait A4, and a landscape sheet is turned onto it — rotated a quarter
+   turn clockwise into the portrait box — while the page itself asks the viewer to turn it
+   back (`page-orientation`): in the PDF the page reads as a landscape one, on paper the
+   sheet is printed sideways on portrait paper, and nothing is scaled or cut either way. */
+@page landscape { size: A4; margin: 0; page-orientation: rotate-left; }
+@media print {
+  .pagedjs_page.pagedjs_landscape_page {
+    page: landscape;
+    width: 210mm !important; height: 297mm !important;
+    overflow: hidden;
+  }
+  .pagedjs_page.pagedjs_landscape_page .pagedjs_sheet {
+    transform: rotate(90deg) translateY(-210mm);
+    transform-origin: top left;
+  }
+}
+
+/* Pages composed by paged.js: a white sheet on a dark ground, like a print preview. */
+.pagedjs_page { background: #fff; margin: 0 auto 18px; box-shadow: 0 4px 16px rgba(0, 0, 0, .35); }
+/* A printed superseded revision says so on every page, in ink. */
+.print-obsolete .pagedjs_page { background-image: var(--obsolete-label); background-repeat: repeat; }
+@media print { .print-obsolete .pagedjs_page { background-image: var(--obsolete-label) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+
+/* One rule under the header and one above the footer, drawn on the band that spans the
+   whole text column: on the individual margin boxes they would stop wherever each box ends. */
+.pagedjs_margin-top { border-bottom: 0.4pt solid #b9c0c8; }
+.pagedjs_margin-bottom { border-top: 0.4pt solid #b9c0c8; }
+
+/* The cover carries no running header or footer. Suppressing them here, on the rendered
+   page, is more reliable than a `content: none` inside `@page :first`. */
+.pagedjs_first_page .pagedjs_margin-top,
+.pagedjs_first_page .pagedjs_margin-bottom { display: none !important; }
+
+.preview-bar {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  display: flex; gap: 12px; align-items: center; justify-content: center;
+  padding: 10px; background: #1c2530; color: #fff;
+}
+
+@media print {
+  body.print-mode { background: #fff; }
+  .preview-bar, .toasts, .ref-panel { display: none !important; }
+  .print-container { padding: 0; }
+  .pagedjs_page { box-shadow: none !important; margin: 0 !important; }
+}

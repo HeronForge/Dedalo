@@ -1,0 +1,687 @@
+/* Authoring interface. */
+
+#tsw-root { height: 100%; }
+.app { display: flex; flex-direction: column; height: 100%; }
+.workspace { display: flex; flex: 1; min-height: 0; }
+
+/* ---- command bar ---- */
+.toolbar { background: #1c2530; color: #eaeef3; }
+.toolbar-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 7px 12px; }
+.toolbar-title { font-size: 15px; margin-right: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.toolbar-title .muted { color: #9aa7b4; font-weight: normal; }
+.toolbar-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+/* The variant selector: white field, dark text, and a label so it is not mistaken for a button. */
+.toolbar-variant { display: inline-flex; align-items: center; gap: 6px; }
+.toolbar-variant-label { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: #9aa7b4; }
+.inp-variant {
+  width: auto; max-width: 230px; padding: 4px 6px; background: #fff; color: #16202b;
+  border-color: #7d8b9a; font-weight: 600;
+}
+.inp-variant:focus { outline: 2px solid #6fb0ff; outline-offset: 1px; }
+
+/* The panel toggle sits first, where the panel itself would be. */
+.nav-toggle { display: inline-flex; align-items: center; gap: 7px; }
+.nav-toggle .burger { font-size: 15px; line-height: 1; }
+.toolbar .nav-toggle-on { background: #4b5b6d; border-color: #6a7b8e; }
+/* Save and validate as icons: a little larger than undo and redo, which are the small acts. */
+.toolbar .btn-act { font-size: 15px; padding: 3px 9px; line-height: 1.2; }
+
+.variant-banner {
+  flex-basis: 100%; display: flex; gap: 10px; align-items: center;
+  background: #7a4a12; color: #ffe9cf; padding: 6px 14px; font-size: 13px;
+}
+/* Unsaved changes: stated where the eye already is, not tucked away in a corner. */
+.unsaved-banner {
+  flex-basis: 100%; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  background: #f6e3bf; color: #5c3c0d; padding: 6px 14px; font-size: 13px;
+  border-top: 1px solid #d8bb84;
+}
+.unsaved-banner .btn { background: #fff; border-color: #c9a464; color: #5c3c0d; }
+.unsaved-banner .btn:hover { background: #fdf6e8; }
+
+/* ---- drop-down menu ---- */
+.menu { position: relative; display: inline-block; }
+.menu-list {
+  position: absolute; right: 0; top: calc(100% + 4px); z-index: 60; display: none;
+  min-width: 232px; background: #fff; color: #1c2530; border: 1px solid #b9c4cf;
+  border-radius: 6px; box-shadow: 0 8px 22px rgba(16, 26, 38, .28); padding: 4px 0;
+}
+.menu-open .menu-list { display: block; }
+.menu-item {
+  display: block; width: 100%; text-align: left; padding: 6px 14px; border: 0;
+  background: none; cursor: pointer; font-size: 13px; color: #1c2530;
+}
+.menu-item:hover:not(:disabled) { background: #e3eefa; }
+.menu-item:disabled { opacity: .45; cursor: default; }
+.menu-sep { height: 1px; background: #e2e8ef; margin: 4px 0; }
+
+/* ---- navigation ---- */
+/* The panel is a drawer: hidden on opening, floating over the document when called, part of
+   the layout once pinned. Two modes, one element, so nothing has to be rebuilt to switch. */
+.workspace { position: relative; }
+.sidebar {
+  width: 250px; flex: none; overflow-y: auto; background: #dfe5ec;
+  border-right: 1px solid #c3ccd6; padding: 0 0 24px;
+  position: absolute; top: 0; bottom: 0; left: 0; z-index: 40;
+  transform: translateX(-100%); visibility: hidden;
+  /* The panel hides exactly when it has finished sliding out, and shows at once on the way in. */
+  transition: transform .16s ease-out, visibility 0s linear .16s;
+  box-shadow: 3px 0 14px rgba(16, 26, 38, .18);
+}
+.sidebar.nav-open { transform: none; visibility: visible; transition: transform .16s ease-out, visibility 0s; }
+.sidebar.nav-pinned { position: static; transform: none; visibility: visible; box-shadow: none; }
+.nav-scrim {
+  position: absolute; inset: 0; z-index: 35; background: rgba(20, 28, 38, .22);
+  opacity: 0; visibility: hidden; transition: opacity .16s;
+}
+.nav-scrim.scrim-on { opacity: 1; visibility: visible; }
+@media (prefers-reduced-motion: reduce) { .sidebar, .nav-scrim { transition: none; } }
+.nav-head {
+  display: flex; align-items: center; gap: 4px; padding: 7px 8px 7px 14px;
+  background: #cfd8e2; border-bottom: 1px solid #c3ccd6; position: sticky; top: 0; z-index: 1;
+}
+.nav-head-title { flex: 1; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #45525f; }
+.nav-pin { filter: grayscale(1); opacity: .5; }
+.nav-pin:hover { opacity: .9; }
+.nav-pin-on { filter: none; opacity: 1; }
+.sidebar.nav-pinned .nav-close { display: none; }
+.nav-group { margin-bottom: 12px; }
+.nav-group:first-of-type { margin-top: 8px; }
+.nav-title { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #62707e; padding: 6px 14px; }
+.nav-item { display: block; width: 100%; text-align: left; padding: 6px 14px; background: none; border: 0; cursor: pointer; border-left: 3px solid transparent; }
+.nav-item:hover { background: #d2dae4; }
+.nav-item-sel { background: #fff; border-left-color: #10559a; font-weight: 600; }
+/* On a narrow window a pinned panel would eat the content: it gets narrower, not wider. */
+@media (max-width: 900px) {
+  .sidebar { width: 210px; }
+  .nav-toggle-text { display: none; }
+}
+
+/* ---- content ---- */
+.content { flex: 1; min-width: 0; overflow: auto; padding: 18px 22px 60px; }
+/* The rail beside the scrollbar takes the top right corner: an editor section keeps its own
+   buttons clear of it. The sheet needs no such care — its corner is the blank of the cover. */
+.content > :not(.section-document) { padding-right: 44px; }
+.section { max-width: 1180px; }
+.section-head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.section-head h2 { font-size: 20px; margin-right: auto; }
+.head-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-left: auto; }
+.hint { color: #55606b; font-size: 13px; margin: 6px 0 12px; }
+.hint-warning { color: #8c2020; font-weight: 600; }
+.empty { color: #7a8592; font-style: italic; padding: 10px 0; }
+.muted { color: #7a8592; }
+.plain-list li { padding: 2px 0; }
+
+.card { background: #fff; border: 1px solid #d6dde5; border-radius: 6px; padding: 12px 14px; margin-bottom: 14px; }
+.card-title { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: #45525f; margin-bottom: 10px; }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 14px; }
+
+/* ---- forms ---- */
+.field { display: block; margin-bottom: 10px; }
+.field-label { display: block; font-size: 12px; color: #45525f; margin-bottom: 3px; }
+.field-help { display: block; font-size: 12px; color: #7a8592; margin-top: 2px; }
+.inp { width: 100%; padding: 5px 7px; border: 1px solid #b9c4cf; border-radius: 4px; background: #fff; color: #16202b; }
+.inp option { color: #16202b; background: #fff; }
+.inp:focus { outline: 2px solid #7fb0e2; outline-offset: -1px; }
+textarea.inp { resize: vertical; }
+.inp-num { width: 110px; }
+.inp-mode { width: 46px; padding: 5px 2px; text-align: center; }
+.inp-cell { min-width: 90px; }
+.inp-add { width: auto; max-width: 220px; }
+.field-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.field-row > * { flex: 1 1 150px; }
+.row-2, .row-3 { display: flex; gap: 6px; flex: 1; }
+.row-2 > *, .row-3 > * { flex: 1; min-width: 0; }
+.check { display: flex; align-items: center; gap: 6px; }
+.value-ref { display: inline-flex; gap: 4px; align-items: center; width: 100%; }
+.value-ref .unit { color: #7a8592; font-size: 12px; }
+.bind { display: inline-flex; gap: 4px; align-items: center; width: 100%; }
+.bind-override .inp { border-color: #c07a20; background: #fff8ef; }
+/* The same statement as the blue in the document: no variant is being written here, but this
+   value is not the same for every product. The text takes the blue, the frame stays quiet. */
+.bind-varies .inp { color: #0a2cff; border-color: #b9c4ff; }
+.btn-reset { color: #c07a20; }
+
+.multi { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.chip { display: inline-flex; align-items: center; gap: 4px; background: #e3eaf2; border: 1px solid #c3ccd6; border-radius: 12px; padding: 1px 4px 1px 9px; font-size: 12px; }
+.chip-x { border: 0; background: none; cursor: pointer; color: #7a8592; padding: 0 3px; }
+.chip-x:hover { color: #a02020; }
+
+/* ---- buttons ---- */
+.btn { padding: 5px 10px; border: 1px solid #b9c4cf; border-radius: 4px; background: #f4f7fa; cursor: pointer; }
+.btn:hover:not(:disabled) { background: #e7edf4; }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn-primary { background: #10559a; border-color: #0d4680; color: #fff; }
+.btn-primary:hover:not(:disabled) { background: #0d4680; }
+.btn-danger { color: #a02020; }
+.btn-icon { padding: 3px 7px; }
+.btn-small { padding: 2px 8px; font-size: 12px; }
+.toolbar .inp { width: auto; max-width: 260px; }
+.toolbar .btn { background: #33404f; border-color: #465464; color: #eaeef3; }
+.toolbar .btn:hover:not(:disabled) { background: #435265; }
+.toolbar .btn-primary { background: #2a7fd4; border-color: #2a7fd4; }
+.toolbar .btn-danger { background: #8c2020; border-color: #8c2020; color: #fff; }
+/* After .btn-primary, and deliberately: the Save button is primary and unsaved at the same
+   time, and «unsaved» is the state worth seeing. */
+.toolbar .btn-unsaved { background: #d98c1f; border-color: #d98c1f; color: #23180a; font-weight: 600; }
+.toolbar .btn-unsaved:hover:not(:disabled) { background: #c47d17; }
+.toolstrip { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0; }
+
+/* ---- master / detail lists ---- */
+/* The row as the document prints it, under the fields that shape it. */
+.preview-body { background: #fff; border: 1px solid #d6dde5; border-radius: 4px; padding: 8px 10px; overflow-x: auto; }
+.document-preview-inline { font-size: 12.5px; }
+.document-preview-inline .doc-table { margin: 0; }
+.document-preview-inline .ref { cursor: default; }
+
+.master-detail { display: grid; grid-template-columns: 340px 1fr; gap: 16px; align-items: start; }
+.master-wide { grid-template-columns: 420px 1fr; }
+.master { background: #fff; border: 1px solid #d6dde5; border-radius: 6px; max-height: 70vh; overflow: auto; }
+/* On a narrow window the two columns would squeeze each other: stack them instead. */
+@media (max-width: 1080px) {
+  .master-detail, .master-wide { grid-template-columns: 1fr; }
+  .master { max-height: 42vh; }
+}
+.detail { min-width: 0; }
+.list .item, .tree .item { border-bottom: 1px solid #eef1f5; }
+.item { display: flex; align-items: center; gap: 6px; padding: 6px 8px; cursor: pointer; }
+.item:hover { background: #f2f6fa; }
+.item-sel { background: #e3eefa; }
+.item-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Names and prerequisites are what one looks for in the list: they wrap rather than be cut. */
+.item-text-wrap { white-space: normal; overflow: visible; text-overflow: clip; }
+.item-meta { display: block; font-size: 11.5px; color: #7a8592; margin-top: 1px; }
+.item-sel .item-meta { color: #5c6a78; }
+.item-actions { display: flex; gap: 2px; opacity: 0; }
+.item:hover .item-actions, .item-sel .item-actions { opacity: 1; }
+.code { font-family: "Consolas", "SF Mono", monospace; font-size: 12px; color: #10559a; }
+.tag { font-size: 11px; background: #e3eaf2; border-radius: 3px; padding: 0 5px; color: #45525f; }
+.tag-set, .tag-changed { background: #fdf0d5; color: #7a4a12; }
+.tag-add, .tag-added { background: #dff3e2; color: #1d6b32; }
+.tag-remove, .tag-removed { background: #fbe0e0; color: #8c2020; }
+.tag-moved { background: #e5e5f5; color: #3a3a80; }
+.tag-kpi { background: #10559a; color: #fff; margin-left: 5px; }
+.badge { display: inline-block; border-radius: 9px; padding: 0 6px; font-size: 11px; }
+.badge-warning { background: #fdf0d5; color: #7a4a12; }
+.tree ul { padding-left: 16px; }
+.tree-group {
+  padding: 8px 8px 4px; font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+  color: #62707e; background: #f2f6fa; border-bottom: 1px solid #e2e8ef;
+}
+.code-setup { color: #5b4b9a; }
+.link-item { background: none; border: 0; padding: 0; color: #10559a; cursor: pointer; text-align: left; }
+.link-item:hover { text-decoration: underline; }
+.row-actions { white-space: nowrap; }
+.row-actions .btn + .btn { margin-left: 4px; }
+.btn-expand { padding: 0 4px; background: none; border: 0; }
+.sublist { display: flex; flex-direction: column; gap: 5px; }
+.subrow { display: flex; gap: 6px; align-items: center; }
+
+/* What a command brings with it, shown rather than asked for. */
+.derived {
+  background: #f2f6fa; border: 1px solid #d6dde5; border-left: 3px solid #0f6b7d;
+  border-radius: 4px; padding: 8px 10px; margin-bottom: 10px; font-size: 13px;
+}
+.derived-title { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: #0f5a69; margin-bottom: 4px; }
+.derived .plain-list { margin-bottom: 6px; }
+
+/* ---- reading a superseded revision ---- */
+/* Two signals, because forgetting which version is on screen is the expensive mistake here:
+   a frame that is impossible to read past, and the word itself across the page. */
+.doc-obsolete {
+  position: relative;
+  border: 3px solid #b3261e !important;
+  box-shadow: 0 0 0 1px #f3d5d3 inset;
+}
+/* The mark rides over the page rather than under it: a background would be reset by any
+   later rule that paints the sheet white. */
+.doc-obsolete::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background-image: var(--obsolete-label); background-repeat: repeat;
+}
+.obsolete-banner {
+  position: sticky; top: -24px; z-index: 5;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  margin: -24px -30px 18px; padding: 8px 14px;
+  background: #b3261e; color: #fff; font-size: 13px;
+}
+.obsolete-banner .btn { background: #fff; border-color: #fff; color: #8c2020; }
+.obsolete-banner .btn:hover { background: #fdf0f0; }
+.rev-later > td { color: #7a8592; font-style: italic; }
+
+/* ---- the panel that lists what changed ---- */
+.ref-panel-diff { width: min(560px, 92vw); }
+.diff-table th.th-obsolete { color: #8c2020; }
+.obsolete-note {
+  font-size: 12px; color: #7a4a12; background: #fdf0d5;
+  border-left: 3px solid #d9a441; padding: 6px 8px; margin: 0 0 10px;
+}
+.diff-table .cell-before { color: #8c2020; text-decoration: line-through; text-decoration-color: #d9a2a2; }
+.diff-table .cell-after { color: #1d6b32; }
+
+/* ---- cycle time ---- */
+.cycle-totals { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.total-card { background: #fff; border: 1px solid #d6dde5; border-radius: 6px; padding: 12px 14px; }
+.total-title { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #45525f; }
+.total-value { font-size: 26px; font-weight: 600; color: #10559a; margin: 4px 0 2px; font-variant-numeric: tabular-nums; }
+.total-note { font-size: 12px; color: #7a8592; }
+.cell-time { white-space: nowrap; display: flex; align-items: center; gap: 5px; }
+.cell-time .inp { width: 110px; }
+.table td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.table td.total { font-weight: 600; }
+
+/* ---- tables ---- */
+.table-wrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; background: #fff; }
+.table th, .table td { border: 1px solid #d6dde5; padding: 4px 7px; text-align: left; vertical-align: top; font-size: 13px; }
+.table thead th { background: #eef2f7; font-size: 12px; }
+.row-head { background: #f7f9fc; font-weight: normal; }
+.group-row th { background: #dfe5ec; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.row-draft td { background: #fffaf0; }
+.cell-before { color: #8c2020; }
+.cell-after { color: #1d6b32; }
+
+/* ---- graphical point editor ---- */
+.canvas { position: relative; overflow: hidden; height: 420px; background: #f2f4f7; border: 1px solid #c3ccd6; border-radius: 4px; cursor: grab; }
+.canvas-drag { cursor: grabbing; }
+.canvas-place { cursor: crosshair; }
+.scene { position: absolute; top: 0; left: 0; }
+.scene-img { display: block; width: 100%; height: auto; user-select: none; }
+.marker { position: absolute; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px #1c2530; }
+.marker-active { background: #d4342a; cursor: move; }
+.marker-other { background: #5a6b7d; opacity: .65; }
+.marker-label { position: absolute; left: 15px; top: -4px; font-size: 10px; background: rgba(255,255,255,.85); padding: 0 3px; border-radius: 2px; white-space: nowrap; }
+.marker-list { margin-top: 8px; font-size: 13px; }
+.marker-list li { padding: 2px 0; }
+.marker-row { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-top: 1px solid #eef1f5; }
+.marker-row .fig-crop { width: 92px; flex: none; border: 1px solid #c3ccd6; border-radius: 3px; }
+.marker-row-body { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.inp-area { width: auto; }
+
+/* ---- figures one can look into ---- */
+.fig-crop, .fig-whole { position: relative; overflow: hidden; background: #eef2f7; }
+.fig-crop img { position: absolute; max-width: none; }
+.fig-whole img { display: block; width: 100%; height: auto; }
+.fig-region { position: absolute; border: 2px solid #d4342a; background: rgba(212, 52, 42, .12); pointer-events: none; }
+.fig-marker {
+  position: absolute; transform: translate(-50%, -50%);
+  min-width: 15px; height: 15px; padding: 0 3px; border-radius: 8px;
+  background: #d4342a; color: #fff; border: 1.5px solid #fff; box-shadow: 0 0 0 1px #1c2530;
+  font: 600 10px/12px "Segoe UI", Arial, sans-serif; text-align: center; white-space: nowrap;
+}
+.fig-marker-other { background: #5a6b7d; opacity: .75; }
+.fig-large { display: flex; flex-direction: column; gap: 8px; }
+.fig-viewport {
+  position: relative; overflow: hidden; height: 64vh; background: #f2f4f7;
+  border: 1px solid #c3ccd6; border-radius: 4px; cursor: grab; touch-action: none;
+}
+.fig-viewport.fig-dragging { cursor: grabbing; }
+.fig-stage { position: absolute; top: 0; left: 0; }
+.fig-stage-img { display: block; width: 100%; height: auto; user-select: none; }
+.fig-readout { font-variant-numeric: tabular-nums; min-width: 46px; }
+.card-figure .fig-crop { border: 1px solid #c3ccd6; border-radius: 3px; }
+.card-figure .fig-whole { margin-top: 6px; border: 1px solid #d6dde5; border-radius: 3px; }
+.doc-figure-zoomable { position: relative; cursor: zoom-in; }
+.figure-zoom-btn { position: absolute; right: 6px; top: 6px; opacity: .85; }
+.doc-figure-zoomable:hover .figure-zoom-btn { opacity: 1; }
+.image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.image-card { background: #fff; border: 1px solid #d6dde5; border-radius: 6px; padding: 10px; }
+.image-card .preview { display: block; max-height: 180px; margin: 0 auto 8px; }
+.logo-box { display: flex; gap: 12px; align-items: center; }
+.logo-preview { max-height: 54px; }
+
+/* ---- glossary: the acronyms the text uses and the list does not explain ---- */
+.acronym-box { background: #f4f7fa; border: 1px solid #d6dde5; border-radius: 6px; padding: 8px 10px; margin-bottom: 10px; }
+.acronym-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.acronym-chip { font-family: Consolas, "Courier New", monospace; }
+.ok-line { color: #1d6b32; }
+.list-compact .item { padding: 4px 8px; }
+.item-muted .item-text { color: #7a8592; }
+
+/* ---- graph ---- */
+.graph-box { background: #fff; border: 1px solid #d6dde5; border-radius: 6px; padding: 12px; overflow-x: auto; }
+.graph-node rect { fill: #f4f7fa; stroke: #7a8592; stroke-width: 1; }
+.graph-node-exclusive rect { stroke: #8c2020; stroke-width: 2.5; }
+/* A stage that excludes some others says so in words under its box; the border stays plain. */
+.graph-note { font-size: 9.5px; fill: #8c2020; paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round; }
+/* Setup stages: rounded, lilac, outside the sequence. */
+.graph-node-setup rect { fill: #f3f0fa; stroke: #5b4b9a; stroke-dasharray: 4 3; }
+.graph-times { font-size: 10px; fill: #5b4b9a; font-family: Consolas, monospace; }
+.graph-call { fill: none; stroke: #5b4b9a; stroke-width: 1.2; stroke-dasharray: 2 3; }
+.graph-arrow-call { fill: #5b4b9a; }
+.graph-band { stroke: #c3ccd6; stroke-width: 1; stroke-dasharray: 6 4; }
+.graph-band-label { font-size: 11px; fill: #62707e; }
+.graph-code { font-size: 11px; fill: #10559a; font-family: Consolas, monospace; }
+.graph-name { font-size: 12px; fill: #1c2530; }
+.graph-edge { fill: none; stroke: #5a6b7d; stroke-width: 1.4; }
+.graph-arrow { fill: #5a6b7d; }
+.legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: #55606b; margin-top: 8px; }
+.legend li { display: flex; align-items: center; gap: 6px; }
+.legend-seg { display: inline-block; width: 24px; height: 0; border-top: 2px solid #5a6b7d; }
+.legend-seg.graph-call { border-top: 2px dotted #5b4b9a; }
+.legend-seg.graph-node-exclusive { height: 12px; border: 2px solid #8c2020; }
+.legend-seg.graph-node-restricted { width: auto; height: auto; border: 0; color: #8c2020; font-size: 11px; }
+.legend-seg.graph-node-restricted::before { content: '⊘'; }
+.legend-seg.graph-node-setup { height: 12px; border: 2px dashed #5b4b9a; border-radius: 6px; background: #f3f0fa; }
+
+/* ---- validation ---- */
+.issue-list li { display: flex; gap: 8px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid #eef1f5; }
+.issue-text { flex: 1; }
+.dot { width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; color: #fff; flex: none; }
+.issue-error .dot { background: #a02020; }
+.issue-warning .dot { background: #c07a20; }
+.issue-info .dot { background: #5a6b7d; }
+
+/* ---- modals and toasts ---- */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(20,28,38,.45); display: flex; align-items: center; justify-content: center; z-index: 50; }
+.modal { background: #fff; border-radius: 6px; width: min(560px, 92vw); max-height: 88vh; display: flex; flex-direction: column; }
+.modal-title { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid #d6dde5; font-weight: 600; }
+.modal-body { padding: 14px; overflow: auto; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid #d6dde5; }
+.toasts { position: fixed; right: 16px; bottom: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 60; }
+.toast { padding: 8px 12px; border-radius: 4px; background: #1c2530; color: #eaeef3; max-width: 420px; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
+.toast-ok { background: #1d6b32; }
+.toast-error { background: #8c2020; }
+.toast-warning { background: #7a4a12; }
+.toast.leaving { opacity: 0; transition: opacity .3s; }
+
+/* ---- status bar ---- */
+.statusbar { background: #dfe5ec; border-top: 1px solid #c3ccd6; font-size: 12px; color: #45525f; }
+.status-row { display: flex; align-items: center; gap: 18px; padding: 4px 14px; }
+.status-dirty { background: #f6e3bf; color: #5c3c0d; font-weight: 600; }
+/* The count of problems is the way into the validation panel. A bar of small grey figures is
+   quiet by trade, and an error has to break that quiet: a red plate, not a number among others. */
+.status-issues { border: 0; background: none; font: inherit; color: inherit; cursor: pointer; padding: 1px 8px; margin: -1px 0; border-radius: 3px; }
+.status-issues:hover { background: rgba(16, 26, 38, .08); }
+.status-issues-error { background: #8c2020; color: #fff; font-weight: 600; }
+.status-issues-error:hover { background: #a52a2a; }
+.status-issues-warning { background: #fdf0d5; color: #7a4a12; font-weight: 600; }
+.status-issues-warning:hover { background: #f6e3bf; }
+.status-issues-ok { color: #1d6b32; }
+
+/* ---- version and changelog ---- */
+.release { border-top: 1px solid #eef1f5; padding: 8px 0; }
+.release:first-of-type { border-top: 0; }
+.release-head { display: flex; gap: 10px; align-items: baseline; }
+.release-notes { margin-top: 4px; }
+.release-notes li { padding: 1px 0 1px 14px; position: relative; }
+.release-notes li::before { content: '—'; position: absolute; left: 0; color: #9aa5b1; }
+.badge-current { background: #dff3e2; color: #1d6b32; }
+
+/* ---- document preview ---- */
+/* The sheet sits in the middle of the window, as a sheet does; reading mode alone puts it on
+   the left, to leave the room on the right to the cards that open there. */
+.section-document { margin: 0 auto; }
+.doc-preview { background: #fff; border: 1px solid #d6dde5; border-radius: 6px; padding: 24px 30px; }
+
+/* ---- reading mode ---- */
+/* Everything that belongs to the editor steps aside; the document keeps the window.
+   The zoom is applied to the sheet itself, so type, tables and figures grow together. */
+.reading-mode .toolbar,
+.reading-mode .sidebar,
+.reading-mode .nav-scrim,
+.reading-mode .statusbar,
+.reading-mode .section-head,
+.reading-mode .hint { display: none !important; }
+.reading-mode .content { padding: 0; background: #55606b; }
+.reading-mode .section { max-width: none; }
+.reading-mode .doc-preview {
+  border: 0; border-radius: 0; margin: 0 auto 0 12px; max-width: 210mm;
+  padding: 16mm 18mm; box-shadow: 0 0 22px rgba(16, 26, 38, .35);
+  zoom: var(--read-zoom, 1);
+}
+.read-bar {
+  position: fixed; left: 50%; bottom: 18px; transform: translate(-50%, 20px); z-index: 70;
+  display: flex; align-items: center; gap: 6px; padding: 6px 10px;
+  background: rgba(28, 37, 48, .93); border-radius: 22px; color: #eaeef3;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .35);
+  opacity: 0; visibility: hidden; transition: opacity .18s, transform .18s, visibility .18s;
+}
+.read-bar-on { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+.read-bar:hover { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+.read-bar .btn { background: #33404f; border-color: #465464; color: #eaeef3; }
+.read-bar .btn:hover:not(:disabled) { background: #4b5b6d; }
+.read-bar .btn-on { background: #2a7fd4; border-color: #2a7fd4; }
+.read-readout { font-variant-numeric: tabular-nums; min-width: 48px; text-align: center; font-size: 12px; }
+.read-sep { width: 1px; height: 18px; background: #4b5b6d; margin: 0 2px; }
+.read-hint {
+  /* Under the trail, which now has the top left corner: two plates on one line is a collision. */
+  position: fixed; left: 50%; top: 52px; transform: translateX(-50%); z-index: 70;
+  background: rgba(28, 37, 48, .9); color: #eaeef3; font-size: 12px;
+  padding: 5px 12px; border-radius: 14px; transition: opacity .5s; pointer-events: none;
+}
+.read-hint-out { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .read-bar, .read-hint { transition: none; } }
+
+/* Folding, on screen only: the printed document always carries every chapter. */
+.doc-preview .doc-h2.foldable, .doc-preview .doc-h3.foldable { cursor: pointer; }
+.doc-preview .doc-h2.foldable:hover, .doc-preview .doc-h3.foldable:hover { color: #10559a; }
+.sec-toggle {
+  background: none; border: 0; cursor: pointer; color: #62707e;
+  font-size: .8em; padding: 0 6px 0 0; line-height: 1;
+}
+.sec-toggle:hover { color: #10559a; }
+.doc-preview .doc-chapter.collapsed > *:not(.doc-h2),
+.doc-preview .doc-sub.collapsed > *:not(.doc-h3) { display: none; }
+.doc-preview .doc-chapter.collapsed > .doc-h2,
+.doc-preview .doc-sub.collapsed > .doc-h3 { opacity: .75; }
+
+/* The stage graph opens full size in a window of its own. */
+.doc-graph-zoomable { position: relative; cursor: zoom-in; }
+.doc-graph-zoomable:hover, .doc-figure-zoomable:hover { outline: 2px solid #cfe0f2; outline-offset: 4px; }
+.graph-large { overflow: auto; }
+.graph-large .graph { width: 100%; height: auto; max-height: 78vh; }
+.modal-wide { width: 96vw; }
+.ref-panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(460px, 92vw); background: #fff; border-left: 1px solid #c3ccd6; box-shadow: -8px 0 24px rgba(0,0,0,.15); z-index: 45; display: flex; flex-direction: column; }
+.panel-title { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-bottom: 1px solid #d6dde5; }
+.panel-body { padding: 14px; overflow: auto; }
+
+/* ---- breadcrumb ---- */
+/* One line under the command bar: which group, which section, and which element inside it.
+   Everything but the last step leads back to where it names. */
+.crumbs {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px;
+  background: #eef2f7; border-bottom: 1px solid #ccd5df;
+  padding: 4px 12px; font-size: 12.5px; color: #45525f;
+}
+.crumb {
+  background: none; border: 0; padding: 2px 5px; border-radius: 4px;
+  font: inherit; color: #10559a; cursor: pointer; max-width: 42ch;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.crumb:hover { background: #dce7f3; }
+.crumb-static { color: #62707e; cursor: default; }
+.crumb-here { color: #1c2530; font-weight: 600; }
+.crumb-sep { color: #9aa5b1; }
+
+/* In reading mode the trail is all that is left of the interface, so it behaves like the rest
+   of it: a small plate at the top left that comes back with the pointer, with the scroll, and
+   gets out of the way when the reading settles. */
+.reading-mode .crumbs {
+  position: fixed; top: 12px; left: 14px; z-index: 70; max-width: min(72vw, 760px);
+  flex-wrap: nowrap; padding: 5px 12px; border: 0; border-radius: 16px;
+  background: rgba(28, 37, 48, .93); color: #cfd8e2;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .35);
+  opacity: 0; visibility: hidden;
+  transition: opacity .18s, visibility .18s;
+}
+.read-chrome .crumbs, .reading-mode .crumbs:hover { opacity: 1; visibility: visible; }
+.reading-mode .crumb { color: #9fc6f2; }
+.reading-mode .crumb:hover { background: #33404f; }
+.reading-mode .crumb-static { color: #9aa7b4; }
+.reading-mode .crumb-here { color: #eaeef3; }
+.reading-mode .crumb-sep { color: #6a7b8e; }
+
+/* The safety net, in the corner where the state of the file is read. */
+.status-nonet { color: #8c2020; font-weight: 600; }
+/* A line the eye has to catch inside a dialog: a draft older than the file it is offered for. */
+.warn-line { background: #fdf0d5; color: #7a4a12; padding: 6px 8px; border-radius: 4px; }
+
+/* ---- the table step in the editor ---- */
+.subrow-column { display: block; padding: 6px 0; border-top: 1px solid #eef1f5; }
+.column-head { display: grid; grid-template-columns: 200px 1fr 90px auto auto auto; gap: 6px; align-items: center; }
+.column-refs { margin-top: 4px; padding-left: 4px; }
+.column-refs .field-row { margin: 0; }
+.grid-editor th { white-space: nowrap; }
+.grid-editor td { vertical-align: top; }
+.grid-label-cell { min-width: 150px; }
+.grid-cell-edit .inp-cell { width: 110px; font-family: "Consolas", "SF Mono", monospace; font-size: 12px; }
+.grid-cell-read { font-size: 11px; color: #62707e; margin-top: 2px; white-space: nowrap; }
+.grid-cell-fixed { font-size: 12px; color: #45525f; white-space: nowrap; }
+.grid-row-actions { white-space: nowrap; }
+.grid-row-actions .btn { margin-left: 1px; }
+
+/* ---- notes in the margin ---- */
+.section-document { position: relative; }
+.notes-strip { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+.note-mark {
+  position: absolute; width: 14px; height: 22px; padding: 0; pointer-events: auto;
+  border: 1px solid rgba(0, 0, 0, .28); border-radius: 4px 2px 2px 4px; cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .3);
+}
+.note-mark:hover { transform: scale(1.18); box-shadow: 0 2px 6px rgba(0, 0, 0, .35); }
+.note-mark-detached { outline: 2px dashed #8c2020; outline-offset: 1px; }
+/* The kind on the mark itself, one glyph, so the margin reads without a pointer on it. */
+.note-mark::after { position: absolute; inset: 0; display: grid; place-items: center; font: 700 11px/1 system-ui, sans-serif; color: #fff; text-shadow: 0 0 2px rgba(0, 0, 0, .5); }
+.note-mark[data-kind="toCheck"]::after { content: '?'; }
+.note-mark[data-kind="condition"]::after { content: '!'; }
+.note-mark[data-kind="leftOut"]::after { content: '–'; }
+.note-kind-tag { font-size: 11px; color: #fff; border-radius: 3px; padding: 0 5px; }
+.kind-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 0; }
+.note-kind-chip { display: inline-flex; align-items: center; gap: 5px; border: 1px solid #c3ccd6; background: #fff; border-radius: 12px; padding: 2px 10px 2px 8px; font: inherit; font-size: 12px; cursor: pointer; color: #7a8592; }
+.note-kind-chip-on { background: #e3eaf2; color: #1c2530; border-color: #9aa5b1; }
+.notes-of-import { margin-top: 10px; }
+.placing-note .doc-preview { cursor: crosshair; }
+.note-card-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.note-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+.note-text { white-space: pre-wrap; }
+.note-detached-tag { font-size: 11px; background: #fbe0e0; color: #8c2020; border-radius: 3px; padding: 0 5px; }
+.note-swatches { display: flex; gap: 8px; padding: 4px 0; }
+.note-swatch { width: 26px; height: 26px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+.note-swatch-on { border-color: #1c2530; box-shadow: 0 0 0 2px #fff inset; }
+.merge-part h4 { margin: 10px 0 4px; font-size: 13px; }
+
+/* ---- the card under a resting pointer ---- */
+.hover-card {
+  position: fixed; z-index: 65; width: min(440px, 92vw); max-height: 60vh; overflow: auto;
+  background: #fff; color: #1c2530; border: 1px solid #b9c4cf; border-radius: 6px;
+  box-shadow: 0 10px 28px rgba(16, 26, 38, .28); padding: 10px 14px; font-size: 13px;
+}
+.hover-card h4 { margin: 2px 0 6px; }
+.hover-card-code { font-family: "Consolas", "SF Mono", monospace; font-size: 12px; color: #10559a; margin-bottom: 2px; }
+
+.card-image { display: block; max-width: 100%; max-height: 220px; margin: 4px 0 8px; border: 1px solid #d6dde5; }
+
+/* ---- the values of one piece of blue text, version by version ---- */
+.variant-values { margin-top: 8px; }
+.variant-values .table-compact td, .variant-values .table-compact th { padding: 4px 8px; font-size: 12.5px; }
+.variant-values .row-current td { background: #eef3fa; }
+.variant-values .value-differs { font-weight: 600; color: #0a2cff; }
+.values-card h4 { margin: 0 0 4px; }
+
+/* ---- the tools at the end of the trail ---- */
+.crumb-tools { margin-left: auto; display: inline-flex; align-items: center; gap: 2px; }
+.crumb-tool {
+  background: none; border: 0; padding: 2px 7px; border-radius: 4px;
+  font: inherit; color: #10559a; cursor: pointer; white-space: nowrap;
+}
+.crumb-tool:hover { background: #dce7f3; }
+.crumb-tool-primary { font-weight: 600; }
+.crumb-tool-sep { width: 1px; height: 14px; background: #c3ccd6; margin: 0 5px; }
+
+/* ---- the rail beside the scrollbar: read, and the legend ---- */
+/* Fixed to the edge of the workspace, which does not scroll, so the two stay put while the
+   sheet moves under them. Quiet — a pale square, a grey sign — and always there. */
+.side-rail {
+  position: absolute; right: 24px; top: 12px; z-index: 44;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.rail-btn {
+  width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 7px; border: 1px solid #c3ccd6; background: rgba(255, 255, 255, .94);
+  color: #55606b; font-size: 16px; line-height: 1; cursor: pointer;
+  box-shadow: 0 2px 8px rgba(16, 26, 38, .14);
+}
+.rail-btn:hover { background: #fff; color: #10559a; border-color: #9fb3c8; }
+.rail-btn-on { background: #1c2530; color: #eaeef3; border-color: #1c2530; }
+.rail-btn-on:hover { background: #33404f; color: #fff; }
+/* `.legend` is also the graph's legend list, whose margin and gap this one must not inherit:
+   the sign sat eight pixels lower than the button above it. */
+.side-rail .legend { position: relative; display: inline-flex; margin: 0; gap: 0; }
+.legend .legend-sign { cursor: default; font-size: 16px; }
+.legend-pop {
+  position: absolute; right: calc(100% + 10px); top: 0; z-index: 66; width: min(520px, 80vw);
+  background: #fff; color: #1c2530; border: 1px solid #b9c4cf; border-radius: 6px;
+  box-shadow: 0 10px 28px rgba(16, 26, 38, .28); padding: 10px 14px 12px; text-align: left;
+  opacity: 0; visibility: hidden; transition: opacity .15s, visibility .15s;
+}
+.legend:hover .legend-pop { opacity: 1; visibility: visible; }
+.legend:hover .legend-sign { color: #10559a; }
+.legend-title { font-weight: 600; font-size: 13px; margin-bottom: 8px; }
+.legend-doc { padding: 0; box-shadow: none; font-size: 9pt; }
+.legend-row { display: grid; grid-template-columns: 150px 1fr; gap: 10px; align-items: center; padding: 4px 0; border-top: 1px solid #eef1f5; }
+.legend-row:first-child { border-top: 0; }
+.legend-text { font: 12.5px/1.35 system-ui, sans-serif; color: #35424f; }
+.legend-fold { font-weight: 600; }
+/* In reading mode the rail is the one piece of interface that stays: it does not fade with
+   the controls, because the way back and the legend are what one looks for when lost. */
+.reading-mode .side-rail { right: 20px; }
+
+/* ---- the contents beside the sheet, reading mode ---- */
+/* In the grey field at the right of the sheet, under the rail. Faint until the pointer rests
+   on it — dark grey on dark grey, a column of names one can forget is there — and then a lit
+   plate with the chapter being read marked, and every other one a click away. The lit entry
+   keeps a little colour even at rest, so that a glance says where one is. */
+.read-outline {
+  position: fixed; right: 20px; top: 214px; z-index: 68; width: 224px;
+  max-height: calc(100vh - 290px); display: flex; flex-direction: column; padding: 4px 4px 6px;
+  border-radius: 8px; background: rgba(28, 37, 48, .28); color: #8b96a2;
+  transition: background .18s, color .18s, box-shadow .18s, transform .22s;
+}
+.read-outline:hover {
+  background: rgba(28, 37, 48, .95); color: #cfd8e2; box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
+}
+.outline-title { font: 600 11px/1.3 system-ui, sans-serif; letter-spacing: .04em; text-transform: uppercase; opacity: .8; padding: 2px 10px 4px; }
+.outline-list { display: flex; flex-direction: column; gap: 1px; overflow-y: auto; overflow-x: hidden; scrollbar-width: thin; }
+/* Unpinned: withdrawn to the edge, a sliver left in sight, out again under the pointer. */
+.read-outline-loose { transform: translateX(calc(100% + 8px)); background: rgba(28, 37, 48, .6); }
+.read-outline-loose:hover { transform: none; }
+.outline-entry {
+  display: block; width: 100%; text-align: left; border: 0; background: none; color: inherit;
+  font: 12px/1.3 system-ui, sans-serif; padding: 4px 8px 4px 10px; border-radius: 4px;
+  cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  border-left: 2px solid transparent;
+}
+.outline-inner { padding-left: 20px; font-size: 11.5px; opacity: .85; }
+.read-outline:hover .outline-entry:hover { background: #33404f; color: #fff; }
+.outline-here { color: #b9d3ee; border-left-color: #6d9ed0; }
+.read-outline:hover .outline-here { color: #fff; background: rgba(42, 127, 212, .28); border-left-color: #9fc6f2; }
+/* A window too narrow to hold the sheet and the column both keeps the sheet. */
+@media (max-width: 1100px) { .read-outline { display: none; } }
+
+/* ---- the neighbours under each crumb ---- */
+.crumb-wrap { position: relative; display: inline-flex; }
+.crumb-menu {
+  position: absolute; left: 0; top: 100%; z-index: 66; min-width: 200px; max-width: 360px;
+  max-height: 60vh; overflow: auto; margin-top: 2px; padding: 4px 0;
+  background: #fff; color: #1c2530; border: 1px solid #b9c4cf; border-radius: 6px;
+  box-shadow: 0 8px 22px rgba(16, 26, 38, .28);
+  opacity: 0; visibility: hidden; transition: opacity .12s .12s, visibility .12s .12s;
+}
+.crumb-wrap:hover > .crumb-menu { opacity: 1; visibility: visible; }
+.crumb-menu-item {
+  display: block; width: 100%; text-align: left; padding: 5px 12px; border: 0; background: none;
+  cursor: pointer; font: 12.5px system-ui, sans-serif; color: #1c2530; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.crumb-menu-item:hover { background: #e3eefa; }
+.crumb-menu-current { font-weight: 600; color: #10559a; }
+/* An option that opens onto more: the sign at its right edge, and the list beside it while the
+   pointer rests on it — on the option or on the list, which is its child in the tree. */
+.crumb-menu-more { padding-right: 26px; position: relative; }
+.crumb-menu-more::after { content: '›'; position: absolute; right: 10px; top: 4px; color: #9aa5b1; }
+.crumb-sub { position: relative; }
+.crumb-sub:hover > .crumb-menu-item { background: #e3eefa; }
+.crumb-sub:hover > .crumb-menu { opacity: 1; visibility: visible; }
+.crumb-menu-sub { position: fixed; left: auto; top: auto; margin: 0; }
