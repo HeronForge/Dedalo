@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DEDALO — Test Specification Writer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #f6f5f2; --paper2: #ffffff; --sunk: #efeee9;
+    --ink: #16181c; --ink2: #585d66; --rule: #dbd8d1;
+    --accent: #0b53ff; --accent-ink: #0b53ff; --accent-soft: rgba(11,83,255,0.07);
+    --amber: #9a5f00; --amber-soft: rgba(154,95,0,0.09);
+    --shadow: 0 1px 2px rgba(20,22,26,0.05), 0 12px 32px rgba(20,22,26,0.06);
+    color-scheme: light;
+  }
+  :root[data-theme="dark"] {
+    --paper: #13151a; --paper2: #1a1d23; --sunk: #101216;
+    --ink: #edeff3; --ink2: #a2a9b6; --rule: #2a2f38;
+    --accent: #6f9dff; --accent-ink: #8fb3ff; --accent-soft: rgba(111,157,255,0.12);
+    --amber: #e2a653; --amber-soft: rgba(226,166,83,0.12);
+    --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 14px 40px rgba(0,0,0,0.35);
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #13151a; --paper2: #1a1d23; --sunk: #101216;
+      --ink: #edeff3; --ink2: #a2a9b6; --rule: #2a2f38;
+      --accent: #6f9dff; --accent-ink: #8fb3ff; --accent-soft: rgba(111,157,255,0.12);
+      --amber: #e2a653; --amber-soft: rgba(226,166,83,0.12);
+      --shadow: 0 1px 2px rgba(0,0,0,0.4), 0 14px 40px rgba(0,0,0,0.35);
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: 'IBM Plex Sans', Helvetica, Arial, sans-serif;
+    font-size: 16px; line-height: 1.55; text-wrap: pretty;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent-ink); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  summary { cursor: pointer; }
+  summary::-webkit-details-marker { display: none; }
+  img { display: block; max-width: 100%; }
+  button { font: inherit; }
+  .chip:hover, .chip:focus { border-color: var(--accent); }
+  .try-card:hover { border-color: var(--accent); box-shadow: var(--shadow); }
+  @keyframes tswSave {
+    0%, 8% { transform: translateY(0) scale(0.98); opacity: 0; }
+    18% { transform: translateY(10px) scale(1); opacity: 1; }
+    72% { transform: translateY(58px) scale(1); opacity: 1; }
+    92%, 100% { transform: translateY(70px) scale(0.98); opacity: 0; }
+  }
+  @keyframes tswPulse {
+    0%, 100% { box-shadow: 0 0 0 2px rgba(255,255,255,0.85), 0 0 0 0 var(--accent-soft); }
+    50% { box-shadow: 0 0 0 2px rgba(255,255,255,0.85), 0 0 0 9px var(--accent-soft); }
+  }
+  @keyframes tswBlink { 0%, 60% { opacity: 1; } 61%, 100% { opacity: 0.25; } }
+  @keyframes tswRise { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+
+<div style="max-width:100%; overflow-x:hidden">
+
+  <header style="position:sticky; top:0; z-index:20; display:flex; align-items:center; gap:16px; padding:10px 20px; background:color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter:blur(10px); border-bottom:1px solid var(--rule)">
+    <a href="#top" style="display:flex; align-items:center; gap:10px; color:var(--ink); text-decoration:none">
+      <img src="assets/dedalo-mark.png" alt="" style="width:30px; height:30px; padding:3px; object-fit:contain; background:#fff; border:1px solid var(--rule); border-radius:3px">
+      <span style="font-family:'IBM Plex Mono',monospace; font-weight:600; letter-spacing:0.14em; font-size:14px">DEDALO</span>
+    </a>
+    <span style="flex:1"></span>
+    <a href="#example" style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--ink2)">Example</a>
+    <a href="https://github.com/HeronForge/Dedalo" style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--ink2)">GitHub</a>
+    <a href="test-spec.html" style="padding:7px 14px; border:1px solid var(--accent); border-radius:2px; background:var(--accent); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:13px; font-weight:500">Get the file</a>
+  </header>
+
+  <main id="top" style="display:block">
+
+    <section style="padding:72px 20px 56px; max-width:1120px; margin:0 auto">
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:48px; align-items:center">
+        <div style="min-width:0">
+          <img src="assets/dedalo.png" alt="DEDALO" style="height:132px; width:auto; padding:14px 18px; object-fit:contain; background:#fff; border:1px solid var(--rule); border-radius:4px; margin-bottom:28px">
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:14px; letter-spacing:0.18em; text-transform:uppercase; color:var(--ink2); margin-bottom:18px">Test Specification Writer</div>
+          <h1 style="margin:0 0 20px; font-size:clamp(30px, 5vw, 46px); line-height:1.12; font-weight:600; letter-spacing:-0.02em">A test specification that is also the program that writes it.</h1>
+          <p style="margin:0 0 14px; font-size:19px; line-height:1.5; color:var(--ink)">DEDALO writes end-of-line test specifications for electronic devices as <strong style="font-weight:600">one self-contained HTML file</strong>: the file is the application and the document at the same time.</p>
+          <p style="margin:0 0 32px; color:var(--ink2)">Whoever receives it opens it with a double click — nothing to install, no network — reads it, navigates it, edits it and prints it to PDF.</p>
+          <div style="display:flex; flex-wrap:wrap; gap:12px; align-items:center">
+            <a href="test-spec.html" style="padding:13px 22px; background:var(--accent); color:#fff; border-radius:2px; font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:500">Open test-spec.html →</a>
+            <a href="#example" style="padding:13px 22px; border:1px solid var(--rule); border-radius:2px; color:var(--ink); font-family:'IBM Plex Mono',monospace; font-size:14px">See a worked example ↓</a>
+          </div>
+          <div style="margin-top:18px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink2)">MIT · v1.37.0 · Chrome, Edge, Firefox; Safari from 16.4</div>
+        </div>
+
+        <div style="min-width:0; display:flex; justify-content:center">
+          <div style="width:100%; max-width:360px; border:1px solid var(--rule); border-radius:4px; background:var(--paper2); box-shadow:var(--shadow); overflow:hidden">
+            <div style="display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid var(--rule); font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink2)">
+              <span style="width:8px; height:8px; border-radius:999px; background:var(--accent); animation:tswBlink 2.4s steps(1,end) infinite"></span>
+              <span>TS-EVC-0117.html</span>
+              <span style="flex:1"></span>
+              <span>1 file</span>
+            </div>
+            <div style="padding:18px; display:flex; flex-direction:column; gap:8px; background:var(--sunk)">
+              <div style="padding:11px 14px; background:var(--paper2); border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:2px; font-size:14px"><strong style="font-weight:600">Editor</strong> <span style="color:var(--ink2); font-size:13px">— sections, stages, steps</span></div>
+              <div style="padding:11px 14px; background:var(--paper2); border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:2px; font-size:14px"><strong style="font-weight:600">Document</strong> <span style="color:var(--ink2); font-size:13px">— chapters, appendices, PDF</span></div>
+              <div style="padding:11px 14px; background:var(--paper2); border:1px solid var(--rule); border-left:3px solid var(--accent); border-radius:2px; font-size:14px"><strong style="font-weight:600">Revision history</strong> <span style="color:var(--ink2); font-size:13px">— issued snapshots</span></div>
+            </div>
+            <div style="position:relative; height:96px; border-top:1px solid var(--rule); overflow:hidden">
+              <div style="position:absolute; inset:0; display:flex; align-items:flex-start; justify-content:center; padding-top:8px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink2)">💾 Save rebuilds the whole file</div>
+              <div style="position:absolute; left:50%; top:26px; margin-left:-84px; width:168px; padding:8px 12px; border:1px solid var(--accent); border-radius:2px; background:var(--accent-soft); font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--accent-ink); text-align:center; animation:tswSave 4.6s ease-in-out infinite">TS-EVC-0117.html ↓</div>
+            </div>
+            <div style="padding:12px 14px; border-top:1px solid var(--rule); font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink2)">the downloaded file replaces the original — and is itself an editor</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="border-top:1px solid var(--rule); background:var(--paper2)">
+      <div style="max-width:1120px; margin:0 auto; padding:64px 20px">
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:var(--ink2); margin-bottom:14px">01 / One single file</div>
+        <h2 style="margin:0 0 18px; font-size:clamp(24px,3.4vw,34px); font-weight:600; letter-spacing:-0.015em; max-width:22ch">No install, no account, no server.</h2>
+        <p style="margin:0 0 40px; max-width:64ch; color:var(--ink2)">Save — the 💾 in the command bar — rebuilds the whole file with the current data and downloads it. The downloaded file replaces the original one and can itself be opened and edited. Nothing else is needed at either end of the exchange.</p>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px,1fr)); gap:32px; align-items:start">
+          <div style="min-width:0; border:1px solid var(--rule); border-radius:3px; background:var(--sunk); padding:20px">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink2); margin-bottom:12px">What the distributed file holds</div>
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink2); line-height:1.9">
+              <div>&lt;!--TSW:DOC--&gt; <span style="color:var(--ink)">the document data</span></div>
+              <div>&lt;!--TSW:HISTORY--&gt; <span style="color:var(--ink)">the revisions, gzipped</span></div>
+              <div>&lt;!--TSW:ASSETS--&gt; <span style="color:var(--ink)">the pictures, as WebP</span></div>
+            </div>
+            <p style="margin:14px 0 0; font-size:14.5px; color:var(--ink2)">On save only those three blocks are replaced: the file is kept in memory exactly as it was opened, and the whole interface is built at runtime.</p>
+          </div>
+
+          <div style="min-width:0; display:flex; flex-direction:column; gap:22px">
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent-ink); margin-bottom:4px">READING MODE</div>
+              <p style="margin:0; color:var(--ink2)"><span style="color:var(--ink)">A file that is the last issued revision word for word</span> — the file as it is handed out — opens straight in reading mode, where nothing leads into the editor. Esc brings the editor back.</p>
+            </div>
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent-ink); margin-bottom:4px">A NET, NOT A SAVE</div>
+              <p style="margin:0; color:var(--ink2)"><span style="color:var(--ink)">Unsaved work is copied into the browser's own storage every few seconds</span> and offered back after a crash or a window closed by mistake. The file on disk changes when you download it and not before, and the status bar says which of the two you are looking at.</p>
+            </div>
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent-ink); margin-bottom:4px">KEYS</div>
+              <p style="margin:0; color:var(--ink2)"><span style="font-family:'IBM Plex Mono',monospace; color:var(--ink)">Ctrl+S</span> saves, <span style="font-family:'IBM Plex Mono',monospace; color:var(--ink)">Ctrl+Z</span> / <span style="font-family:'IBM Plex Mono',monospace; color:var(--ink)">Ctrl+Y</span> undo and redo.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="border-top:1px solid var(--rule)">
+      <div style="max-width:1120px; margin:0 auto; padding:64px 20px">
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:var(--ink2); margin-bottom:14px">02 / What a specification contains</div>
+        <h2 style="margin:0 0 18px; font-size:clamp(24px,3.4vw,34px); font-weight:600; letter-spacing:-0.015em; max-width:26ch">Stages, steps, points, criteria — each addressed by its code.</h2>
+        <p style="margin:0 0 12px; max-width:64ch; color:var(--ink2)">The steps refer to the catalogues through a code, and every reference carries both the code and the name of what it points at.</p>
+        <p style="margin:0 0 36px; max-width:64ch; font-size:14.5px; color:var(--ink2)">The values shown from here on are taken from <a href="#example">the example specification</a> — an invented product, described in full further down.</p>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(290px,1fr)); gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:3px; overflow:hidden; margin-bottom:48px">
+          <div style="background:var(--paper2); padding:22px; min-width:0">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent-ink); margin-bottom:8px">STG-xx · SET-xx</div>
+            <div style="font-weight:600; margin-bottom:6px">Stages and setup stages</div>
+            <p style="margin:0; font-size:14.5px; color:var(--ink2)">Stages run once, in the order their prerequisites allow. Setup stages are routines with no place of their own — engage the fixture, power up, power down and discharge — run only where a step calls them, as many times as they are called. Numbered apart, listed apart, drawn in two bands of the graph.</p>
+          </div>
+          <div style="background:var(--paper2); padding:22px; min-width:0">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent-ink); margin-bottom:8px">APPLY · MEASURE · SET · GET</div>
+            <div style="font-weight:600; margin-bottom:6px">Tests → steps</div>
+            <p style="margin:0; font-size:14.5px; color:var(--ink2)">The step carries the high-level description; the detail splits into what is put on the unit and what is read back, each with its points, resource, parameters, command and an optional wait — a number or a variable, «WAIT $PilotSettle» printing as «500 ms (PilotSettle)». A half that speaks over a bus reads SET or GET instead.</p>
+          </div>
+          <div style="background:var(--paper2); padding:22px; min-width:0">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent-ink); margin-bottom:8px">RES-xx · CMD-xx · AP-xx</div>
+            <div style="font-weight:600; margin-bottom:6px">Resources, interfaces, commands</div>
+            <p style="margin:0; font-size:14.5px; color:var(--ink2)">An interface declares the instrument that speaks it and the points it is wired to. A command may state its nominal execution time, its decoding, and where it is defined — «Defined in REF-05» — when its specification is another document.</p>
+          </div>
+          <div style="background:var(--paper2); padding:22px; min-width:0">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent-ink); margin-bottom:8px">COMPUTED</div>
+            <div style="font-weight:600; margin-bottom:6px">Computed measurements</div>
+            <p style="margin:0; font-size:14.5px; color:var(--ink2)">A measurement may be computed from earlier readings — <span style="font-family:'IBM Plex Mono',monospace">(meter − reference) / reference × 100</span>, judged against <span style="font-family:'IBM Plex Mono',monospace; color:var(--accent-ink)">$MeterAccuracy</span> — with its formula printed and its inputs named. It names no instrument and validation refuses an input that comes after it.</p>
+          </div>
+          <div style="background:var(--paper2); padding:22px; min-width:0">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent-ink); margin-bottom:8px">GRAPH · CONSTRAINTS</div>
+            <div style="font-weight:600; margin-bottom:6px">Prerequisites and exclusions</div>
+            <p style="margin:0; font-size:14.5px; color:var(--ink2)">Prerequisites between stages, parallel exclusions, stimuli held on exit — checked for cycles, recursion and dangling references, and drawn in the stage graph, which prints in landscape and opens full size on a click. A stage that allows nothing alongside it says so under its own box: <span style="font-family:'IBM Plex Mono',monospace">⊘ not with STG-03, STG-05</span>.</p>
+          </div>
+          <div style="background:var(--paper2); padding:22px; min-width:0">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent-ink); margin-bottom:8px">VARIABLES · GLOSSARY · NOTES</div>
+            <div style="font-weight:600; margin-bottom:6px">What holds the document together</div>
+            <p style="margin:0; font-size:14.5px; color:var(--ink2)">Global variables — numbers with a unit, text, enumerations, booleans, ranges — read by every parameter and every limit instead of repeating a number. A glossary of the acronyms the prose uses. Notes in the margin, kept beside the specification and never part of it.</p>
+          </div>
+        </div>
+
+        <div style="border:1px solid var(--rule); border-radius:3px; background:var(--paper2); padding:22px; margin-bottom:48px">
+          <div style="display:flex; flex-wrap:wrap; align-items:baseline; gap:12px; margin-bottom:16px">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.1em; color:var(--ink2)">EVERY CODE HAS A CARD</div>
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--accent-ink)">— hover a code, as in the document</div>
+          </div>
+          <p style="margin:0 0 16px; font-size:14.5px; color:var(--ink2)">In the printed document the steps stay short and refer to the appendices through their codes. On screen, resting the pointer on a code previews its card; a click opens it at the side without losing your place, or opens the entity in the editor.</p>
+          <div id="codeChips" style="display:flex; flex-wrap:wrap; gap:10px">
+            <button type="button" class="chip" data-code="AP-06" data-name="Control Pilot input" data-detail="Contact point on the controller board, reached by the bed of nails fixture; the Control Pilot conductor of the socket arrives here." data-meta="kind: contact point · pictures: component side · used by STG-03, SET-05" style="font-family:'IBM Plex Mono',monospace; font-size:13px; padding:6px 11px; border:1px solid var(--rule); border-bottom-style:dotted; border-radius:2px; background:var(--sunk); color:var(--accent-ink); cursor:help">AP-06 Control Pilot input</button>
+            <button type="button" class="chip" data-code="RES-04" data-name="6½ digit multimeter" data-detail="Applied at the supply rail pads and at the pilot conductors. The appendix says where each resource is applied and how many channels it is charged." data-meta="kind: instrument · channels: 2 concurrent" style="font-family:'IBM Plex Mono',monospace; font-size:13px; padding:6px 11px; border:1px solid var(--rule); border-bottom-style:dotted; border-radius:2px; background:var(--sunk); color:var(--accent-ink); cursor:help">RES-04 6½ digit multimeter</button>
+            <button type="button" class="chip" data-code="CMD-03" data-name="Read pilot state" data-detail="Answers with the IEC 61851 state letter. A criterion over this command is read in the unit the command declares when it states none of its own." data-meta="interface: bench console · nominal execution time: 40 ms" style="font-family:'IBM Plex Mono',monospace; font-size:13px; padding:6px 11px; border:1px solid var(--rule); border-bottom-style:dotted; border-radius:2px; background:var(--sunk); color:var(--accent-ink); cursor:help">CMD-03 Read pilot state</button>
+            <button type="button" class="chip" data-code="STG-06" data-name="Residual current monitoring" data-detail="AC and DC residual current, trip time against $RcmAcTripTimeMax and $RcmDcTripTimeMax. Added in revision 01, extended in revision 02." data-meta="prerequisites: STG-02, STG-05 · ⊘ not with STG-01" style="font-family:'IBM Plex Mono',monospace; font-size:13px; padding:6px 11px; border:1px solid var(--rule); border-bottom-style:dotted; border-radius:2px; background:var(--sunk); color:var(--accent-ink); cursor:help">STG-06 Residual current monitoring</button>
+            <button type="button" class="chip" data-code="SET-04" data-name="Power down and discharge" data-detail="A routine with no place of its own: it runs wherever a step calls it, as many times as it is called, and is charged to the stages that call it." data-meta="kind: setup stage · called from 6 steps" style="font-family:'IBM Plex Mono',monospace; font-size:13px; padding:6px 11px; border:1px solid var(--rule); border-bottom-style:dotted; border-radius:2px; background:var(--sunk); color:var(--accent-ink); cursor:help">SET-04 Power down and discharge</button>
+          </div>
+          <div id="codeCard" hidden style="margin-top:16px; border:1px solid var(--accent); border-radius:3px; background:var(--sunk); padding:16px; max-width:520px; box-shadow:var(--shadow); animation:tswRise 0.18s ease-out">
+            <div style="display:flex; gap:10px; align-items:baseline; margin-bottom:8px">
+              <span id="codeCardCode" style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--accent-ink)"></span>
+              <span id="codeCardName" style="font-weight:600; font-size:15px"></span>
+            </div>
+            <div id="codeCardDetail" style="font-size:14px; color:var(--ink2)"></div>
+            <div id="codeCardMeta" style="margin-top:12px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink2)"></div>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:32px; align-items:start">
+          <div style="min-width:0">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.1em; color:var(--ink2); margin-bottom:12px">APPLICATION POINTS ON THE PICTURE</div>
+            <div style="position:relative; border:1px solid var(--rule); border-radius:3px; overflow:hidden; background:var(--sunk)">
+              <img src="assets/pcb-top.webp" alt="Controller board, component side, with application point markers">
+              <div style="position:absolute; left:6%; top:23%; transform:translate(-50%,-50%); min-width:24px; height:24px; padding:0 6px; display:flex; align-items:center; justify-content:center; border-radius:999px; background:var(--accent); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; box-shadow:0 0 0 2px rgba(255,255,255,0.85); animation:tswPulse 3.6s ease-in-out infinite">01</div>
+              <div style="position:absolute; left:27%; top:14%; transform:translate(-50%,-50%); min-width:24px; height:24px; padding:0 6px; display:flex; align-items:center; justify-content:center; border-radius:999px; background:var(--accent); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; box-shadow:0 0 0 2px rgba(255,255,255,0.85); animation:tswPulse 3.6s ease-in-out 0.4s infinite">10</div>
+              <div style="position:absolute; left:88%; top:15%; transform:translate(-50%,-50%); min-width:24px; height:24px; padding:0 6px; display:flex; align-items:center; justify-content:center; border-radius:999px; background:var(--accent); color:#fff; font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; box-shadow:0 0 0 2px rgba(255,255,255,0.85); animation:tswPulse 3.6s ease-in-out 0.8s infinite">13</div>
+              <div style="position:absolute; left:22%; top:90%; transform:translate(-50%,-50%); min-width:24px; height:24px; padding:0 6px; display:flex; align-items:center; justify-content:center; border-radius:999px; background:var(--ink); color:var(--paper2); font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; box-shadow:0 0 0 2px rgba(255,255,255,0.85)">TP1</div>
+              <div style="position:absolute; left:31%; top:90%; transform:translate(-50%,-50%); min-width:24px; height:24px; padding:0 6px; display:flex; align-items:center; justify-content:center; border-radius:999px; background:var(--ink); color:var(--paper2); font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:600; box-shadow:0 0 0 2px rgba(255,255,255,0.85)">TP2</div>
+            </div>
+            <p style="margin:12px 0 0; font-size:14.5px; color:var(--ink2)">Only the number of the point is drawn, so the markers stay small; the full name is one hover or one click away. Unless the point is a test point: when its connector names one, the marker shows that name instead, so the drawing speaks the language printed on the board. Every marker also defines the area of the picture worth showing: opening a point gives the crop first.</p>
+          </div>
+
+          <div style="min-width:0">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.1em; color:var(--ink2); margin-bottom:12px">ACCEPTANCE CRITERIA</div>
+            <div style="border:1px solid var(--rule); border-radius:3px; background:var(--paper2); overflow:hidden">
+              <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(110px,1fr)); gap:1px; background:var(--rule)">
+                <div style="background:var(--paper2); padding:16px 10px; text-align:center">
+                  <div style="font-family:'IBM Plex Mono',monospace; font-size:15px; font-weight:500">3.3 V ±3 %</div>
+                  <div style="display:inline-block; margin-top:8px; padding:1px 6px; background:var(--sunk); border:1px solid var(--rule); border-radius:2px; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ink2)">123</div>
+                </div>
+                <div style="background:var(--paper2); padding:16px 10px; text-align:center">
+                  <div style="font-family:'IBM Plex Mono',monospace; font-size:15px; font-weight:500">= state B</div>
+                  <div style="display:inline-block; margin-top:8px; padding:1px 6px; background:var(--sunk); border:1px solid var(--rule); border-radius:2px; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ink2)">Abc</div>
+                </div>
+                <div style="background:var(--paper2); padding:16px 10px; text-align:center">
+                  <div style="font-family:'IBM Plex Mono',monospace; font-size:13.5px; font-weight:500; word-break:break-all">^EVC22 v2\.\d+\.\d+$</div>
+                  <div style="display:inline-block; margin-top:8px; padding:1px 6px; background:var(--sunk); border:1px solid var(--rule); border-radius:2px; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ink2)">RegEx</div>
+                </div>
+                <div style="background:var(--paper2); padding:16px 10px; text-align:center">
+                  <div style="font-family:'IBM Plex Mono',monospace; font-size:15px; font-weight:500">yes</div>
+                  <div style="display:inline-block; margin-top:8px; padding:1px 6px; background:var(--sunk); border:1px solid var(--rule); border-radius:2px; font-family:'IBM Plex Mono',monospace; font-size:10px; color:var(--ink2)">DGT</div>
+                </div>
+              </div>
+            </div>
+            <p style="margin:12px 0 28px; font-size:14.5px; color:var(--ink2)">Numeric limits use the complete TestStand comparison set, named as TestStand names them — the types that pass outside their limits included, and NONE, which records a value and judges nothing. A limit may read a global variable instead of a number; a nominal without a tolerance is an error, not a bare number.</p>
+
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.1em; color:var(--ink2); margin-bottom:12px">THE TABLE STEP</div>
+            <div style="border:1px solid var(--rule); border-radius:3px; background:var(--paper2); overflow-x:auto">
+              <table style="width:100%; border-collapse:collapse; font-size:13.5px; min-width:360px">
+                <thead>
+                  <tr>
+                    <th style="text-align:left; padding:10px 12px; border-bottom:1px solid var(--rule); font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:500; color:var(--ink2)">PP RESISTOR<br>APPLY · RES-13 [Ω]</th>
+                    <th style="text-align:center; padding:10px 12px; border-bottom:1px solid var(--rule); font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:500; color:var(--ink2)">CABLE CAPABILITY<br>GET · CMD-05 [A]</th>
+                    <th style="text-align:center; padding:10px 12px; border-bottom:1px solid var(--rule); font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:500; color:var(--ink2)">EFFECTIVE LIMIT<br>GET · CMD-06 [A]</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="padding:9px 12px; border-bottom:1px solid var(--rule); font-family:'IBM Plex Mono',monospace">1500</td>
+                    <td style="padding:9px 12px; border-bottom:1px solid var(--rule); text-align:center; font-family:'IBM Plex Mono',monospace">13</td>
+                    <td style="padding:9px 12px; border-bottom:1px solid var(--rule); text-align:center; font-family:'IBM Plex Mono',monospace">13</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:9px 12px; border-bottom:1px solid var(--rule); font-family:'IBM Plex Mono',monospace">680</td>
+                    <td style="padding:9px 12px; border-bottom:1px solid var(--rule); text-align:center; font-family:'IBM Plex Mono',monospace">20</td>
+                    <td style="padding:9px 12px; border-bottom:1px solid var(--rule); text-align:center; font-family:'IBM Plex Mono',monospace">20</td>
+                  </tr>
+                  <tr>
+                    <td style="padding:9px 12px; font-family:'IBM Plex Mono',monospace">220</td>
+                    <td style="padding:9px 12px; text-align:center; font-family:'IBM Plex Mono',monospace">32</td>
+                    <td style="padding:9px 12px; text-align:center; font-family:'IBM Plex Mono',monospace"><span style="color:var(--accent-ink)">$MaxCurrent</span></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div style="padding:10px 12px; border-top:1px solid var(--rule); font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink2)">WAIT 300 ms — the PP input is filtered</div>
+            </div>
+            <p style="margin:12px 0 0; font-size:14.5px; color:var(--ink2)">When the same reading is taken for a list of combinations, the step is one table: the columns say what is applied and what is read, with which instrument or command and in which unit; the rows say the combinations, one criterion per cell, typed as the specification writes it. It prints as one table, on the sheet and in the Word file.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="border-top:1px solid var(--rule); background:var(--paper2)">
+      <div style="max-width:1120px; margin:0 auto; padding:64px 20px">
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:var(--ink2); margin-bottom:14px">03 / Variants and revisions</div>
+        <h2 style="margin:0 0 18px; font-size:clamp(24px,3.4vw,34px); font-weight:600; letter-spacing:-0.015em; max-width:26ch">One base document. Variants as an overlay — nothing is duplicated.</h2>
+        <p style="margin:0 0 40px; max-width:64ch; color:var(--ink2)">A variant is a set of operations on the base document: anything can be added, changed or removed. The matrix covers the frequent cases; for everything else you pick the variant in the top bar and edit the document — each change becomes a customisation of that variant, marked with an orange frame and undone with ↺.</p>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:32px; align-items:start">
+          <div style="min-width:0">
+            <div style="border:1px solid var(--rule); border-radius:3px; background:var(--sunk); padding:22px">
+              <div style="padding:12px 14px; background:var(--paper2); border:1px solid var(--rule); border-radius:2px; font-family:'IBM Plex Mono',monospace; font-size:13px">EVC-22 · base document</div>
+              <div style="display:flex; flex-direction:column; gap:8px; margin-top:8px; padding-left:22px; border-left:1px solid var(--rule); margin-left:14px">
+                <div style="padding:10px 12px; background:var(--paper2); border:1px solid var(--rule); border-radius:2px">
+                  <div style="font-family:'IBM Plex Mono',monospace; font-size:12.5px">EVC-11 · 3 phases, 16 A</div>
+                  <div style="font-size:12.5px; color:var(--ink2)">two variable values, nothing else</div>
+                </div>
+                <div style="padding:10px 12px; background:var(--paper2); border:1px solid var(--rule); border-radius:2px">
+                  <div style="font-family:'IBM Plex Mono',monospace; font-size:12.5px">EVC-7 S · single phase, compact</div>
+                  <div style="font-size:12.5px; color:var(--ink2)">removes a stage, a test, two steps and two points</div>
+                </div>
+                <div style="padding:10px 12px; background:var(--paper2); border:1px solid var(--rule); border-left:3px solid var(--amber); border-radius:2px">
+                  <div style="font-family:'IBM Plex Mono',monospace; font-size:12.5px">EVC-22 Pro · LTE modem</div>
+                  <div style="font-size:12.5px; color:var(--ink2)">adds a command and a test</div>
+                </div>
+              </div>
+            </div>
+            <p style="margin:14px 0 0; font-size:14.5px; color:var(--ink2)">Codes do not shift under a variant: a stage keeps the code it has in the base document, and a gap in the numbering is how the document says a stage is not run here.</p>
+          </div>
+
+          <div style="min-width:0; display:flex; flex-direction:column; gap:24px">
+            <div style="padding:18px 20px; border:1px solid var(--rule); border-radius:3px; background:var(--accent-soft)">
+              <div style="font-size:15px">Whatever a variant makes different is written in <span style="color:var(--accent-ink); font-weight:500">electric blue</span> wherever it is read — in the base document as in a variant.</div>
+              <div style="margin-top:14px; font-size:15px; color:var(--ink)">Pilot duty cycle:
+                <button type="button" id="variantToggle" style="font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:500; color:var(--accent-ink); background:none; border:none; border-bottom:1px dotted var(--accent); padding:0 1px; cursor:pointer">53.3 % ±1 %</button>
+                <span style="color:var(--ink2)">— click it</span>
+              </div>
+              <div id="variantTable" hidden style="margin-top:14px; border:1px solid var(--accent); border-radius:3px; background:var(--paper2); overflow:hidden; animation:tswRise 0.18s ease-out">
+                <div style="padding:8px 12px; border-bottom:1px solid var(--rule); font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink2)">$PwmDuty — value per variant</div>
+                <div style="display:flex; justify-content:space-between; gap:12px; padding:8px 12px; border-bottom:1px solid var(--rule); font-family:'IBM Plex Mono',monospace; font-size:13px">
+                  <span style="color:var(--ink2)">EVC-22 (base)</span><span>53.3 %</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; gap:12px; padding:8px 12px; border-bottom:1px solid var(--rule); font-family:'IBM Plex Mono',monospace; font-size:13px">
+                  <span style="color:var(--ink2)">EVC-11</span><span>26.7 %</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; gap:12px; padding:8px 12px; border-bottom:1px solid var(--rule); font-family:'IBM Plex Mono',monospace; font-size:13px">
+                  <span style="color:var(--ink2)">EVC-7 S</span><span>53.3 %</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; gap:12px; padding:8px 12px; border-bottom:1px solid var(--rule); font-family:'IBM Plex Mono',monospace; font-size:13px">
+                  <span style="color:var(--ink2)">EVC-22 Pro</span><span>53.3 %</span>
+                </div>
+                <div style="padding:8px 12px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink2)">Screen only: on paper the document is one product.</div>
+              </div>
+            </div>
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent-ink); margin-bottom:4px">VALIDATE</div>
+              <p style="margin:0; color:var(--ink2)"><span style="color:var(--ink)">You work on a draft.</span> Validate freezes an immutable snapshot — number, date, author, reason, status — and moves the draft to the next number. The history stays inside the file, compressed, and feeds the change record and the comparison between two versions, which produces the differences grouped by chapter.</p>
+            </div>
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent-ink); margin-bottom:4px">REVISION MATRIX</div>
+              <p style="margin:0; color:var(--ink2)">The last appendix of the printed document: one column per revision that changed something, one row per thing changed, each cell saying what that revision did to it — added, changed from what to what, removed, moved — coloured by kind. A long text is counted rather than quoted.</p>
+            </div>
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent-ink); margin-bottom:4px">MERGE FORWARD</div>
+              <p style="margin:0; color:var(--ink2)">Two revisions consolidate into one: the chosen revision leaves the record and what it changed belongs to the revision that follows. The model is single editor — whoever edits issues the revision and redistributes the file; opening a file with fewer issued revisions warns.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="border-top:1px solid var(--rule)">
+      <div style="max-width:1120px; margin:0 auto; padding:64px 20px">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:48px; align-items:start">
+          <div style="min-width:0">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:var(--ink2); margin-bottom:14px">04 / From the existing PDF</div>
+            <h2 style="margin:0 0 18px; font-size:clamp(24px,3.4vw,34px); font-weight:600; letter-spacing:-0.015em">A legacy specification, converted with a language model.</h2>
+            <p style="margin:0 0 16px; color:var(--ink2)">Old specifications usually exist as PDFs. <span style="font-family:'IBM Plex Mono',monospace; color:var(--ink)">IMPORT-GUIDE.md</span> is written to be handed to a model together with the source document: it explains the model of a specification, gives the exact JSON format and the rules for reading a legacy text — what becomes a stimulus and what a measurement, when a repeated block is a setup stage, when a value deserves a variable, and above all not to invent what the source does not say.</p>
+            <p style="margin:0; color:var(--ink2)">The model returns one <span style="font-family:'IBM Plex Mono',monospace; color:var(--ink)">spec.json</span>; <strong style="font-weight:600; color:var(--ink)">Import data…</strong> loads it and lists whatever it could not resolve. The same guide doubles as the conceptual documentation of DEDALO, and the import also accepts a previous Export data file, so the JSON is a round-trip format.</p>
+          </div>
+          <div style="min-width:0">
+            <div style="border:1px solid var(--rule); border-radius:3px; background:var(--paper2); box-shadow:var(--shadow); overflow:hidden">
+              <div style="padding:10px 14px; border-bottom:1px solid var(--rule); font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--ink2)">Import report — margin notes</div>
+              <div style="display:flex; flex-direction:column">
+                <div style="display:flex; gap:12px; padding:14px; border-bottom:1px solid var(--rule)">
+                  <div style="flex:none; width:4px; border-radius:2px; background:var(--amber)"></div>
+                  <div style="min-width:0">
+                    <div style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink2)">TO CHECK · signed «Import»</div>
+                    <div style="font-size:14px">The source gives the pilot duty as a range without a tolerance — confirm against the drawing.</div>
+                  </div>
+                </div>
+                <div style="display:flex; gap:12px; padding:14px; border-bottom:1px solid var(--rule)">
+                  <div style="flex:none; width:4px; border-radius:2px; background:var(--accent)"></div>
+                  <div style="min-width:0">
+                    <div style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink2)">CONDITION · signed «Import»</div>
+                    <div style="font-size:14px">Measured at 25 °C ±5 — stated in the source preamble, not in the step.</div>
+                  </div>
+                </div>
+                <div style="display:flex; gap:12px; padding:14px">
+                  <div style="flex:none; width:4px; border-radius:2px; background:var(--ink2)"></div>
+                  <div style="min-width:0">
+                    <div style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink2)">LEFT OUT · signed «Import»</div>
+                    <div style="font-size:14px">§7.4 acoustic check: no instrument and no limit in the source.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <p style="margin:14px 0 0; font-size:14.5px; color:var(--ink2)">What the conversion has to say beside the document does not go into the document: it comes in as notes in the margin, with their file offered from the report. Pictures cannot travel in the JSON — upload them afterwards and place the markers.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section style="border-top:1px solid var(--rule); background:var(--paper2)">
+      <div style="max-width:1120px; margin:0 auto; padding:64px 20px">
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:var(--ink2); margin-bottom:14px">05 / Word and print</div>
+        <h2 style="margin:0 0 18px; font-size:clamp(24px,3.4vw,34px); font-weight:600; letter-spacing:-0.015em; max-width:24ch">Same document, same density, on paper and in Word.</h2>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px,1fr)); gap:32px; margin-top:32px">
+          <div style="min-width:0">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent-ink); margin-bottom:6px">.DOCX</div>
+            <p style="margin:0; color:var(--ink2)">Heading styles, so the navigation pane works and the table of contents fills itself in with Ctrl+A, F9; tables with repeating header rows; A4 page setup; a running header with company and product and a footer with document code, revision, confidentiality and «Page X of Y».</p>
+          </div>
+          <div style="min-width:0">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent-ink); margin-bottom:6px">NO LIBRARY</div>
+            <p style="margin:0; color:var(--ink2)">A .docx is a ZIP of XML parts, so it is written here directly — nothing to download, the file stays self-contained. Word cannot lay the markers over a picture, so the browser draws each figure onto a canvas first — image plus markers, and the stage graph — and embeds the resulting PNGs.</p>
+          </div>
+          <div style="min-width:0">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--accent-ink); margin-bottom:6px">COMPACT BY DESIGN</div>
+            <p style="margin:0; color:var(--ink2)">A specification is read at the bench. Only the cover, the stages chapter and the appendices start on a new page; stage constraints are one line instead of a table; the step table keeps three columns. The same content that used to take 15 pages takes 10.</p>
+            <div style="margin-top:12px; display:flex; align-items:baseline; gap:10px; font-family:'IBM Plex Mono',monospace">
+              <span style="font-size:26px; color:var(--ink2); text-decoration:line-through">15</span>
+              <span style="color:var(--ink2)">→</span>
+              <span style="font-size:34px; font-weight:600; color:var(--accent-ink)">10</span>
+              <span style="font-size:12px; color:var(--ink2)">pages</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="example" style="border-top:1px solid var(--rule)">
+      <div style="max-width:1120px; margin:0 auto; padding:64px 20px">
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:var(--ink2); margin-bottom:14px">06 / The worked example</div>
+        <h2 style="margin:0 0 18px; font-size:clamp(24px,3.4vw,34px); font-weight:600; letter-spacing:-0.015em; max-width:26ch">EVC-22 — the specification of a product that does not exist.</h2>
+
+        <div style="display:flex; gap:12px; align-items:flex-start; max-width:74ch; padding:16px 18px; border:1px solid var(--amber); border-radius:3px; background:var(--amber-soft); margin-bottom:32px">
+          <span style="font-family:'IBM Plex Mono',monospace; font-size:11.5px; font-weight:600; color:var(--amber); white-space:nowrap; padding-top:2px">FICTITIOUS</span>
+          <div style="font-size:15px">Everything in <span style="font-family:'IBM Plex Mono',monospace">wallbox.html</span> is invented for the demonstration: <strong style="font-weight:600">Voltaria Energy S.r.l.</strong>, the Ampère wallbox platform, the <strong style="font-weight:600">EVC-22 AC charge controller</strong> and the document <span style="font-family:'IBM Plex Mono',monospace">TS-EVC-0117</span> do not exist. No real company, product, limit or measurement is described — the file is there to show the shape a full specification takes, and it is where every number and every picture on this page comes from.</div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:1px; background:var(--rule); border:1px solid var(--rule); border-radius:3px; overflow:hidden; margin-bottom:36px">
+          <div style="background:var(--paper2); padding:18px 16px"><div style="font-family:'IBM Plex Mono',monospace; font-size:26px; font-weight:600; letter-spacing:-0.02em">12</div><div style="font-size:13px; color:var(--ink2)">test stages</div></div>
+          <div style="background:var(--paper2); padding:18px 16px"><div style="font-family:'IBM Plex Mono',monospace; font-size:26px; font-weight:600; letter-spacing:-0.02em">5</div><div style="font-size:13px; color:var(--ink2)">setup stages</div></div>
+          <div style="background:var(--paper2); padding:18px 16px"><div style="font-family:'IBM Plex Mono',monospace; font-size:26px; font-weight:600; letter-spacing:-0.02em">106</div><div style="font-size:13px; color:var(--ink2)">steps</div></div>
+          <div style="background:var(--paper2); padding:18px 16px"><div style="font-family:'IBM Plex Mono',monospace; font-size:26px; font-weight:600; letter-spacing:-0.02em">41</div><div style="font-size:13px; color:var(--ink2)">contact points</div></div>
+          <div style="background:var(--paper2); padding:18px 16px"><div style="font-family:'IBM Plex Mono',monospace; font-size:26px; font-weight:600; letter-spacing:-0.02em">15</div><div style="font-size:13px; color:var(--ink2)">instruments</div></div>
+          <div style="background:var(--paper2); padding:18px 16px"><div style="font-family:'IBM Plex Mono',monospace; font-size:26px; font-weight:600; letter-spacing:-0.02em">31</div><div style="font-size:13px; color:var(--ink2)">commands</div></div>
+          <div style="background:var(--paper2); padding:18px 16px"><div style="font-family:'IBM Plex Mono',monospace; font-size:26px; font-weight:600; letter-spacing:-0.02em">3</div><div style="font-size:13px; color:var(--ink2)">protocols</div></div>
+          <div style="background:var(--paper2); padding:18px 16px"><div style="font-family:'IBM Plex Mono',monospace; font-size:26px; font-weight:600; letter-spacing:-0.02em">25</div><div style="font-size:13px; color:var(--ink2)">glossary terms</div></div>
+          <div style="background:var(--paper2); padding:18px 16px"><div style="font-family:'IBM Plex Mono',monospace; font-size:26px; font-weight:600; letter-spacing:-0.02em">4</div><div style="font-size:13px; color:var(--ink2)">variants</div></div>
+          <div style="background:var(--paper2); padding:18px 16px"><div style="font-family:'IBM Plex Mono',monospace; font-size:26px; font-weight:600; letter-spacing:-0.02em">3</div><div style="font-size:13px; color:var(--ink2)">issued revisions</div></div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px,1fr)); gap:32px; align-items:start">
+          <div style="min-width:0">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.1em; color:var(--ink2); margin-bottom:12px">THE SEQUENCE</div>
+            <div style="border:1px solid var(--rule); border-radius:3px; background:var(--paper2); overflow:hidden">
+              <div style="display:flex; gap:12px; padding:8px 14px; border-bottom:1px solid var(--rule); font-size:14px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--accent-ink); white-space:nowrap">STG-01</span><span style="min-width:0">Fixture and dielectric strength</span></div>
+              <div style="display:flex; gap:12px; padding:8px 14px; border-bottom:1px solid var(--rule); font-size:14px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--accent-ink); white-space:nowrap">STG-02</span><span style="min-width:0">Power up and supply rails</span></div>
+              <div style="display:flex; gap:12px; padding:8px 14px; border-bottom:1px solid var(--rule); font-size:14px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--accent-ink); white-space:nowrap">STG-03</span><span style="min-width:0">Control Pilot</span></div>
+              <div style="display:flex; gap:12px; padding:8px 14px; border-bottom:1px solid var(--rule); font-size:14px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--accent-ink); white-space:nowrap">STG-04</span><span style="min-width:0">Proximity Pilot</span></div>
+              <div style="display:flex; gap:12px; padding:8px 14px; border-bottom:1px solid var(--rule); font-size:14px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--accent-ink); white-space:nowrap">STG-05</span><span style="min-width:0">Contactor and socket lock</span></div>
+              <div style="display:flex; gap:12px; padding:8px 14px; border-bottom:1px solid var(--rule); font-size:14px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--accent-ink); white-space:nowrap">STG-06</span><span style="min-width:0">Residual current monitoring</span></div>
+              <div style="display:flex; gap:12px; padding:8px 14px; border-bottom:1px solid var(--rule); font-size:14px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--accent-ink); white-space:nowrap">STG-07</span><span style="min-width:0">Energy metering</span></div>
+              <div style="display:flex; gap:12px; padding:8px 14px; border-bottom:1px solid var(--rule); font-size:14px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--accent-ink); white-space:nowrap">STG-08</span><span style="min-width:0">Front panel</span></div>
+              <div style="display:flex; gap:12px; padding:8px 14px; border-bottom:1px solid var(--rule); font-size:14px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--accent-ink); white-space:nowrap">STG-09</span><span style="min-width:0">RFID reader</span></div>
+              <div style="display:flex; gap:12px; padding:8px 14px; border-bottom:1px solid var(--rule); font-size:14px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--accent-ink); white-space:nowrap">STG-10</span><span style="min-width:0">Temperature monitoring</span></div>
+              <div style="display:flex; gap:12px; padding:8px 14px; border-bottom:1px solid var(--rule); font-size:14px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--accent-ink); white-space:nowrap">STG-11</span><span style="min-width:0">Communications</span></div>
+              <div style="display:flex; gap:12px; padding:8px 14px; border-bottom:1px solid var(--rule); font-size:14px"><span style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--accent-ink); white-space:nowrap">STG-12</span><span style="min-width:0">Close-out</span></div>
+              <div style="padding:10px 14px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink2)">SET-01 … SET-05 — engage and release the fixture, power up, power down and discharge, vehicle connected in state B</div>
+            </div>
+          </div>
+
+          <div style="min-width:0; display:flex; flex-direction:column; gap:28px">
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.1em; color:var(--ink2); margin-bottom:12px">ISSUED REVISIONS</div>
+              <div style="border:1px solid var(--rule); border-radius:3px; background:var(--paper2); overflow:hidden">
+                <div style="padding:12px 14px; border-bottom:1px solid var(--rule)">
+                  <div style="display:flex; gap:10px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink2)"><span style="color:var(--accent-ink)">Rev 00</span><span>2026-03-16</span><span>G. Ferraro</span></div>
+                  <div style="font-size:14px">First issue</div>
+                </div>
+                <div style="padding:12px 14px; border-bottom:1px solid var(--rule)">
+                  <div style="display:flex; gap:10px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink2)"><span style="color:var(--accent-ink)">Rev 01</span><span>2026-05-22</span><span>G. Ferraro</span></div>
+                  <div style="font-size:14px">Residual current monitoring stage; EVC-11 and EVC-7 S variants</div>
+                </div>
+                <div style="padding:12px 14px; border-bottom:1px solid var(--rule)">
+                  <div style="display:flex; gap:10px; font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink2)"><span style="color:var(--accent-ink)">Rev 02</span><span>2026-07-14</span><span>S. Moretti</span></div>
+                  <div style="font-size:14px">DC residual current test added; KPI tests marked</div>
+                </div>
+                <div style="padding:10px 14px; font-family:'IBM Plex Mono',monospace; font-size:11.5px; color:var(--ink2)">any two of them compare, chapter by chapter</div>
+              </div>
+            </div>
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.1em; color:var(--ink2); margin-bottom:12px">THE FOUR PHOTOGRAPHS</div>
+              <div style="display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px">
+                <img src="assets/pcb-top.webp" alt="Controller board, component side" style="width:100%; height:78px; object-fit:cover; border:1px solid var(--rule); border-radius:2px">
+                <img src="assets/pcb-bottom.webp" alt="Controller board, solder side" style="width:100%; height:78px; object-fit:cover; border:1px solid var(--rule); border-radius:2px">
+                <img src="assets/front.webp" alt="Front panel" style="width:100%; height:78px; object-fit:cover; border:1px solid var(--rule); border-radius:2px">
+                <img src="assets/terminals.webp" alt="Wiring compartment" style="width:100%; height:78px; object-fit:cover; border:1px solid var(--rule); border-radius:2px">
+              </div>
+              <p style="margin:10px 0 0; font-size:14px; color:var(--ink2)">Component side, solder side, front panel, wiring compartment — 41 contact points placed across them, each with its markers and its crop.</p>
+            </div>
+            <a href="wallbox.html" style="display:inline-block; align-self:flex-start; padding:13px 22px; background:var(--accent); color:#fff; border-radius:2px; font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:500">Open the example →</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="download" style="border-top:1px solid var(--rule); background:var(--paper2)">
+      <div style="max-width:1120px; margin:0 auto; padding:64px 20px">
+        <div style="font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.16em; text-transform:uppercase; color:var(--ink2); margin-bottom:14px">07 / Try it</div>
+        <h2 style="margin:0 0 36px; font-size:clamp(24px,3.4vw,34px); font-weight:600; letter-spacing:-0.015em; max-width:24ch">Three files. Open one with a double click.</h2>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(270px,1fr)); gap:16px">
+          <a href="test-spec.html" class="try-card" style="display:block; padding:22px; border:1px solid var(--accent); border-radius:3px; background:var(--accent-soft); color:var(--ink); text-decoration:none">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--accent-ink); margin-bottom:8px">test-spec.html</div>
+            <div style="font-weight:600; margin-bottom:6px">Empty document</div>
+            <div style="font-size:14px; color:var(--ink2)">The one to start from.</div>
+          </a>
+          <a href="example.html" class="try-card" style="display:block; padding:22px; border:1px solid var(--rule); border-radius:3px; background:var(--paper2); color:var(--ink); text-decoration:none">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--accent-ink); margin-bottom:8px">example.html</div>
+            <div style="font-weight:600; margin-bottom:6px">A small example <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:500; color:var(--amber)">FICTITIOUS</span></div>
+            <div style="font-size:14px; color:var(--ink2)">LCU-200 lighting control unit: two issued revisions, two variants, an image with markers, populated appendices. An invented product.</div>
+          </a>
+          <a href="wallbox.html" class="try-card" style="display:block; padding:22px; border:1px solid var(--rule); border-radius:3px; background:var(--paper2); color:var(--ink); text-decoration:none">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--accent-ink); margin-bottom:8px">wallbox.html</div>
+            <div style="font-weight:600; margin-bottom:6px">The showcase <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; font-weight:500; color:var(--amber)">FICTITIOUS</span></div>
+            <div style="font-size:14px; color:var(--ink2)">The EVC-22 example described above: twelve stages, five setup stages, forty-one points, four variants, three revisions. An invented product.</div>
+          </a>
+        </div>
+
+        <div style="display:flex; flex-wrap:wrap; gap:24px; margin-top:32px; padding-top:24px; border-top:1px solid var(--rule); font-family:'IBM Plex Mono',monospace; font-size:13.5px">
+          <a href="https://github.com/HeronForge/Dedalo">Repository ↗</a>
+          <a href="https://github.com/HeronForge/Dedalo/blob/main/docs/EDITING-GUIDE.md">EDITING-GUIDE.md ↗</a>
+          <a href="https://github.com/HeronForge/Dedalo/blob/main/docs/IMPORT-GUIDE.md">IMPORT-GUIDE.md ↗</a>
+          <a href="https://github.com/HeronForge/Dedalo/blob/main/docs/example-spec.json">example-spec.json ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <footer style="border-top:1px solid var(--rule); background:var(--sunk)">
+      <div style="max-width:1120px; margin:0 auto; padding:44px 20px 56px">
+        <div style="display:flex; flex-wrap:wrap; gap:24px; align-items:flex-start; justify-content:space-between">
+          <div style="display:flex; align-items:center; gap:12px">
+            <img src="assets/dedalo-mark.png" alt="" style="width:36px; height:36px; padding:4px; object-fit:contain; background:#fff; border:1px solid var(--rule); border-radius:3px">
+            <div style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--ink2); line-height:1.6">
+              <div style="color:var(--ink)">DEDALO <span style="color:var(--ink2)">· Test Specification Writer</span></div>
+              <div>v1.37.0 · data schema 2 · tsw-authoring/1 · tsw-export/1</div>
+            </div>
+          </div>
+          <div style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--ink2); line-height:1.6">
+            <div>MIT License · Copyright (c) 2026 D. Tracchi</div>
+            <div>Written with the assistance of Claude (Anthropic)</div>
+          </div>
+        </div>
+
+        <details style="margin-top:32px; border-top:1px solid var(--rule); padding-top:20px">
+          <summary style="font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--accent-ink); list-style:none">Changelog — 1.37.0, 2026-09-13 ▾</summary>
+          <div style="margin-top:20px; display:flex; flex-direction:column; gap:26px; max-width:78ch">
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink2); margin-bottom:8px">1.37.0 · 2026-09-13</div>
+              <ul style="margin:0; padding-left:20px; font-size:14.5px; color:var(--ink2); display:flex; flex-direction:column; gap:8px">
+                <li>The project has a name: DEDALO. Its mark stands at the right end of every printed header and closes the cover with «Powered by DEDALO».</li>
+                <li>The table step: one step for a list of combinations, the columns saying what is applied and read, the rows the combinations, one criterion per cell.</li>
+                <li>A measurement may be computed from earlier readings, tagged COMPUTED, with its formula printed and its inputs named.</li>
+                <li>The cover is signed by as many people as the process asks for — a list of signatories, each with a role, printed four to a table.</li>
+                <li>A glossary chapter; the editor lists the acronyms the prose uses and the glossary does not explain.</li>
+                <li>A revision matrix closes the printed document; the commands appendix and the stage graph print in landscape.</li>
+                <li>A conversion no longer writes into the document: its remarks become notes in the margin, signed «Import».</li>
+                <li>The data schema moves to 2 — signatory list, waits as value references. Every file written by an earlier build opens.</li>
+              </ul>
+            </div>
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink2); margin-bottom:8px">1.36.0 · 2026-09-13</div>
+              <ul style="margin:0; padding-left:20px; font-size:14.5px; color:var(--ink2); display:flex; flex-direction:column; gap:8px">
+                <li>A second example ships with the tool: wallbox.html, the end-of-line specification of an EV charging controller.</li>
+                <li>An authoring file may end with a «conversion» block: the source it was converted from and what that source contains that the file does not.</li>
+              </ul>
+            </div>
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace; font-size:12.5px; color:var(--ink2); margin-bottom:8px">1.35.0 · 2026-09-12</div>
+              <ul style="margin:0; padding-left:20px; font-size:14.5px; color:var(--ink2); display:flex; flex-direction:column; gap:8px">
+                <li>Notes in the margin, attached to the element of the document rather than to a height, travelling in a file of their own and merged by id.</li>
+                <li>What changes from one variant to the next is written in electric blue, with the value it takes in every variant one click away.</li>
+                <li>Reading mode for the file as it is handed out; quiet buttons beside the scrollbar that stay put while the sheet moves.</li>
+              </ul>
+            </div>
+            <a href="https://github.com/HeronForge/Dedalo/blob/main/src/version.js" style="font-family:'IBM Plex Mono',monospace; font-size:13px">Full changelog ↗</a>
+          </div>
+        </details>
+      </div>
+    </footer>
+
+  </main>
+</div>
+
+<script>
+(function () {
+  var card = document.getElementById('codeCard');
+  var code = document.getElementById('codeCardCode');
+  var name = document.getElementById('codeCardName');
+  var detail = document.getElementById('codeCardDetail');
+  var meta = document.getElementById('codeCardMeta');
+  document.querySelectorAll('#codeChips .chip').forEach(function (btn) {
+    var open = function () {
+      code.textContent = btn.dataset.code;
+      name.textContent = btn.dataset.name;
+      detail.textContent = btn.dataset.detail;
+      meta.textContent = btn.dataset.meta;
+      card.hidden = false;
+    };
+    btn.addEventListener('mouseenter', open);
+    btn.addEventListener('focus', open);
+    btn.addEventListener('click', open);
+  });
+
+  var variantTable = document.getElementById('variantTable');
+  var variantToggle = document.getElementById('variantToggle');
+  variantToggle.addEventListener('mouseenter', function () { variantTable.hidden = false; });
+  variantToggle.addEventListener('click', function () { variantTable.hidden = !variantTable.hidden; });
+})();
+</script>
+
+</body>
+</html>
