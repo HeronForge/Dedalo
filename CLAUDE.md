@@ -197,6 +197,72 @@ Three numbers move independently, all declared in `src/version.js`:
 `test/model.test.js` enforces that `CHANGELOG[0].version === APP_VERSION`, that the list is
 newest-first without duplicates, and that every entry is a dated list of full sentences.
 
+## Publishing: GitHub and the Pages site
+
+The repository lives at `https://github.com/HeronForge/Dedalo` — private for now, meant to go
+public later. Commits are authored as `HeronForge <329209718+HeronForge@users.noreply.github.com>`,
+a GitHub noreply address chosen so the author's real name never enters a history that will be
+public; the real name stays, deliberately, in `LICENSE` and `AUTHOR.name` (`src/version.js`),
+which is a different question from who the git identity is. `user.name`/`user.email` are set
+**locally** in this repository's `.git/config`, not globally — a fresh clone or worktree has
+none until they are set again, and committing without doing so leaks whatever identity Git
+falls back to.
+
+`main` carries only what a build needs: `src/`, `build/`, `docs/`, `test/`, and the usual root
+files. `dist/`, `node_modules/`, and working material that is not part of the published project
+(`LandingPage/`, `_Inbox/`, `_outbox/`, `TODO.txt`) are gitignored and never committed there.
+
+### The landing page and GitHub Pages
+
+The public-facing landing page and the three files a visitor can try (`test-spec.html`,
+`example.html`, `wallbox.html`) are **not** served from `main` — they live on a separate
+`gh-pages` branch, which is what GitHub Pages is (or will be, once the repository is public)
+configured to deploy from, at `/ (root)`.
+
+`LandingPage/DEDALO Landing.dc.html` is the source of the landing page: a Claude Design Canvas
+artboard, editable in Claude's canvas tool. It depends on `support.js` and `window.React` to
+render — those exist inside Claude's own canvas editor and inside a published Artifact, not on
+an arbitrary host, so the artboard itself can never be the file GitHub Pages serves.
+`LandingPage/index.html` is the plain HTML/CSS/vanilla-JS port of it, written by hand for that
+reason: same content, same two bits of interaction (hovering a code chip opens its card;
+clicking the pilot-duty-cycle value toggles the per-variant table), no runtime dependency. A
+canvas construct has no plain-HTML equivalent to copy mechanically — `<sc-for>` becomes the
+literal repeated markup, `<sc-if>` becomes a `hidden` attribute toggled by the inline `<script>`
+already at the bottom of `index.html`, and a `{{ }}` interpolation becomes the literal value.
+Whoever edits the canvas has to re-do that translation by hand afterwards; nothing generates it.
+
+Rebuild and republish `gh-pages` whenever the canvas or the app changes:
+
+1. `npm run build` — fresh `dist/test-spec.html`, `dist/example.html`, `dist/wallbox.html`.
+2. If the canvas changed, update `LandingPage/index.html` to match by hand. Either way, check
+   that its links still point at `github.com/HeronForge/Dedalo` (an earlier draft pointed at
+   `dtracchi/dedalo`, a placeholder from before the repository had a home) and that the version
+   number and changelog excerpt in its footer are in step with `src/version.js`.
+3. Publish from a **separate worktree** checked out onto `gh-pages`, never from the `main`
+   working tree — this keeps the two branches' files from ever mixing on disk:
+   ```bash
+   git fetch origin gh-pages
+   git worktree add /tmp/dedalo-ghpages gh-pages     # any path outside the repo; existing branch, not orphan
+   cp LandingPage/index.html /tmp/dedalo-ghpages/
+   cp LandingPage/assets/*.png LandingPage/assets/*.webp /tmp/dedalo-ghpages/assets/
+   cp dist/test-spec.html dist/example.html dist/wallbox.html /tmp/dedalo-ghpages/
+   cd /tmp/dedalo-ghpages
+   git add -A && git commit -m "…" && git push origin gh-pages
+   cd - && git worktree remove /tmp/dedalo-ghpages
+   ```
+   `.nojekyll` already sits at the root of `gh-pages` so GitHub does not run Jekyll over what is
+   a plain static site; there is no reason to remove it. The branch was bootstrapped once as an
+   orphan (`git worktree add --orphan -b gh-pages <path>`, no shared history with `main` — the
+   two branches hold unrelated content on purpose) — every update after that checks out the
+   existing branch instead, so `gh-pages` keeps its own history rather than being replaced each
+   time.
+
+While the repository stays private, GitHub Pages itself may be unavailable regardless of branch
+setup — Pages on a private repo needs a paid plan (GitHub Pro for a personal account, Team or
+Enterprise for an organisation) on most plans, and the option simply will not appear in Settings
+otherwise. Publishing `gh-pages` and enabling Pages are two different steps; the first can happen
+any time, the second may have to wait for the repository to go public.
+
 ## Writing style
 
 The prose here is part of the product. The changelog is shown in the editor and is written for
