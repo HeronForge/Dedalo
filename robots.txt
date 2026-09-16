@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://heronforge.github.io/Dedalo/sitemap.xml
