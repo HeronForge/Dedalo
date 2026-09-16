@@ -9,13 +9,21 @@ prints it to PDF.
 
 ## Using it
 
-1. `dist/test-spec.html` — empty document, the one to start from.
-2. `dist/example.html` — a small complete example (LCU-200 lighting control unit) with two
-   issued revisions, two variants, an image with markers and populated appendices.
-3. `dist/wallbox.html` — the showcase: the end of line specification of an EV charging
-   controller, with four photographs and forty contact points, routines called from several
-   places, stages that run in parallel, every kind of acceptance criterion, three variants and
-   three issued revisions to compare.
+Three files to try, live on GitHub Pages — no build required:
+
+1. [`test-spec.html`](https://heronforge.github.io/Dedalo/test-spec.html) — empty document, the
+   one to start from.
+2. [`example.html`](https://heronforge.github.io/Dedalo/example.html) — a small complete example
+   (LCU-200 lighting control unit) with two issued revisions, two variants, an image with markers
+   and populated appendices.
+3. [`wallbox.html`](https://heronforge.github.io/Dedalo/wallbox.html) — the showcase: the end of
+   line specification of an EV charging controller, with four photographs and forty contact
+   points, routines called from several places, stages that run in parallel, every kind of
+   acceptance criterion, three variants and three issued revisions to compare.
+
+Save the page (browser's Save As, or right-click a link above → Save link as) to get a local
+copy, or build your own with `npm run build` — see [Development](#development) below; the same
+three files land in `dist/`, which is generated and not checked into the repository.
 
 Open it with a double click. **Save** (the 💾 in the command bar) rebuilds the whole file with
 the current data and downloads it: the downloaded file replaces the original one and can itself
