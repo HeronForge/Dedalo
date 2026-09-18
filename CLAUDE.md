@@ -37,6 +37,28 @@ double click. `README.md` describes the product; `docs/EDITING-GUIDE.md` and
 `docs/IMPORT-GUIDE.md` are the user-facing manuals, and the import guide doubles as the
 conceptual documentation of the data model.
 
+## The HeronForge ecosystem
+
+DEDALO is the first of a family of satellite tools (capitolati di fornitura, preventivi, an
+agent-guided specification generator, and whatever follows) that share conventions but not code
+or a repo — each has its own architecture and its own CLAUDE.md, and mixing them would force
+every project's assistant to filter out rules that don't apply to it. What they share lives in
+a sibling repo, `../heronforge-kb/` (relative to this repo's parent directory):
+
+- `../heronforge-kb/KB.md` — conventions stable across the family (git identity, licensing,
+  versioning philosophy, writing register). Read it once when it or this section changes; it is
+  not something to re-check on every task.
+- `../heronforge-kb/ALIGNMENT.md` — an append-only, dated, newest-first log of cross-cutting
+  checkpoints. **Before non-trivial work on this repo, check it for entries you have not yet
+  accounted for** (a project memory can track the last entry seen) and flag anything relevant
+  to the user before proceeding.
+- `../heronforge-kb/interchange/dedalo/` — a snapshot of DEDALO's compiled output (currently
+  `wallbox.html` and the import guide) that satellite tools use to test integration, instead of
+  depending on this repo's source. **Whenever a change here touches what a satellite project
+  reads or writes** — the `tsw-authoring`/`tsw-export` format, or anything documented in
+  `docs/IMPORT-GUIDE.md` — refreshing that snapshot and adding an `ALIGNMENT.md` entry is part
+  of finishing the change, not a separate follow-up task.
+
 ## Architecture
 
 ### The shell, and why the build looks the way it does
