@@ -7,6 +7,9 @@ _Inbox/
 _outbox/
 TODO.txt
 
+# video tutorial automation pipeline: tooling and generated media, not part of the product
+video-pipeline/
+
 # OS/editor cruft
 .DS_Store
 Thumbs.db
