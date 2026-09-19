@@ -276,6 +276,33 @@ pause, or the clip opens on a held frame of whatever was on screen first (the co
 of the time) rather than the target. Re-run either script after a UI change makes an existing
 capture stale; both document the selectors they rely on inline.
 
+### English and Italian, as sibling files
+
+Every page on `gh-pages` exists in both languages as two separate files, not one file toggling
+its text with JS — `index.html` (English, canonical) pairs with `index-it.html`; `confronto.html`
+and `perche-dedalo.html` (Italian, canonical — that pair's actual audience) pair with
+`confronto-en.html` and `perche-dedalo-en.html`. A small `EN · IT` switcher sits in every page's
+header, the current language plain text and the other language a link to its sibling — same
+markup pattern on all six files. **Every cross-link a page makes must stay in that page's own
+language**: `index.html` links to `perche-dedalo-en.html`, not `perche-dedalo.html`, and vice
+versa — a reader who picked English and then clicked through should never land back in Italian
+without asking. This was wrong once already (`confronto.html` and `perche-dedalo.html` linked to
+`index.html` — English — before `index-it.html` existed to link to instead); check every `<a
+href="index...` / `href="confronto...` / `href="perche-dedalo...` on a page against what language
+that page is before publishing.
+
+One rule decides what gets translated and what stays English, applied while writing
+`index-it.html`: **prose is translated, anything that quotes the app's actual interface is not.**
+DEDALO's own UI has no localisation — every screenshot, GIF, code-chip label, and the wallbox
+example's own content are genuinely English, so translating a mockup of them into Italian would
+show something the app never shows. Headings, paragraphs, captions: Italian. Button names field
+labels, code chip data, the table-step mockup, the changelog (quoting `src/version.js` verbatim
+in spirit): left as English, exactly as a reader would see them by actually opening the app.
+
+`<link rel="alternate" hreflang="…">` pairs are set in every page's `<head>` (English page →
+`hreflang="en"` self + `hreflang="it"` sibling, and reversed on the Italian page); `sitemap.xml`
+lists `index.html` and `index-it.html` (the two `noindex` pages don't need an entry).
+
 `LandingPage/DEDALO Landing.dc.html` is the source of the landing page: a Claude Design Canvas
 artboard, editable in Claude's canvas tool. It depends on `support.js` and `window.React` to
 render — those exist inside Claude's own canvas editor and inside a published Artifact, not on
@@ -300,7 +327,9 @@ Rebuild and republish `gh-pages` whenever the canvas or the app changes:
    ```bash
    git fetch origin gh-pages
    git worktree add /tmp/dedalo-ghpages gh-pages     # any path outside the repo; existing branch, not orphan
-   cp LandingPage/index.html LandingPage/confronto.html LandingPage/perche-dedalo.html /tmp/dedalo-ghpages/
+   cp LandingPage/index.html LandingPage/index-it.html LandingPage/confronto.html \
+      LandingPage/confronto-en.html LandingPage/perche-dedalo.html LandingPage/perche-dedalo-en.html \
+      LandingPage/sitemap.xml /tmp/dedalo-ghpages/
    cp LandingPage/assets/*.png LandingPage/assets/*.webp LandingPage/assets/*.gif /tmp/dedalo-ghpages/assets/
    cp dist/test-spec.html dist/example.html dist/wallbox.html /tmp/dedalo-ghpages/
    cd /tmp/dedalo-ghpages
