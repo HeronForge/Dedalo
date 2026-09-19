@@ -221,8 +221,8 @@ newest-first without duplicates, and that every entry is a dated list of full se
 
 ## Publishing: GitHub and the Pages site
 
-The repository lives at `https://github.com/HeronForge/Dedalo` — private for now, meant to go
-public later. Commits are authored as `HeronForge <329209718+HeronForge@users.noreply.github.com>`,
+The repository lives at `https://github.com/HeronForge/Dedalo` — public. Commits are authored
+as `HeronForge <329209718+HeronForge@users.noreply.github.com>`,
 a GitHub noreply address chosen so the author's real name never enters a history that will be
 public; the real name stays, deliberately, in `LICENSE` and `AUTHOR.name` (`src/version.js`),
 which is a different question from who the git identity is. `user.name`/`user.email` are set
@@ -238,8 +238,36 @@ files. `dist/`, `node_modules/`, and working material that is not part of the pu
 
 The public-facing landing page and the three files a visitor can try (`test-spec.html`,
 `example.html`, `wallbox.html`) are **not** served from `main` — they live on a separate
-`gh-pages` branch, which is what GitHub Pages is (or will be, once the repository is public)
-configured to deploy from, at `/ (root)`.
+`gh-pages` branch, which GitHub Pages is configured to deploy from, at `/ (root)`:
+`https://heronforge.github.io/Dedalo/`.
+
+Two more pages live beside `index.html` on that same branch, both deliberately `noindex` and
+not linked from the main nav — targeted links, not general-audience content, cross-linked with
+each other:
+
+- `confronto.html` — for the engineer who actually writes specifications in Word and is wary of
+  changing tools. Extremely short by design (that audience does not read a long pitch); one
+  interactive centrepiece (moving a step, watching a cross-reference break in Word versus update
+  itself here) plus three one-line comparisons.
+- `perche-dedalo.html` — the business case for whoever decides whether to switch: seven reasons,
+  ranked, each collapsed to a headline by default and expandable for the paragraph. Any claim
+  copied in from outside the project (a draft pitch, a list of selling points) needs checking
+  against what the app actually does before it goes in — three claims from an earlier draft (a
+  "relational database", validation that blocks saving, native TestStand/Python integration)
+  didn't hold up and were rewritten or cut.
+
+Both pages embed real proof, not illustrations: `assets/shot-ap-card.png`,
+`assets/shot-variant-popup.png`, `assets/gif-ap-card.gif` and `assets/gif-variant-popup.gif` are
+genuine captures of the app (the AP-06 card with its real crop, the `$PwmDuty` per-variant
+popup), taken with Playwright against the built `dist/wallbox.html` — not mocked up in CSS the
+way `index.html`'s own demos are. `video-pipeline/scripts/capture-landing-assets.mjs` (static
+screenshots) and `capture-landing-clips.mjs` (short `.webm` clips, meant to be converted to GIF
+with ffmpeg's two-pass palette approach — see either script for the exact filter chain) do the
+capturing; both are one-off tools living in the gitignored `video-pipeline/` because they reuse
+its already-installed Playwright and its `cursor-overlay.mjs` helper (a synthetic cursor dot +
+click ripple drawn into the page — headless recordings have no real OS pointer to show one
+otherwise). Re-run them after a UI change makes an existing screenshot stale; both scripts
+document the selectors they rely on inline.
 
 `LandingPage/DEDALO Landing.dc.html` is the source of the landing page: a Claude Design Canvas
 artboard, editable in Claude's canvas tool. It depends on `support.js` and `window.React` to
@@ -265,8 +293,8 @@ Rebuild and republish `gh-pages` whenever the canvas or the app changes:
    ```bash
    git fetch origin gh-pages
    git worktree add /tmp/dedalo-ghpages gh-pages     # any path outside the repo; existing branch, not orphan
-   cp LandingPage/index.html /tmp/dedalo-ghpages/
-   cp LandingPage/assets/*.png LandingPage/assets/*.webp /tmp/dedalo-ghpages/assets/
+   cp LandingPage/index.html LandingPage/confronto.html LandingPage/perche-dedalo.html /tmp/dedalo-ghpages/
+   cp LandingPage/assets/*.png LandingPage/assets/*.webp LandingPage/assets/*.gif /tmp/dedalo-ghpages/assets/
    cp dist/test-spec.html dist/example.html dist/wallbox.html /tmp/dedalo-ghpages/
    cd /tmp/dedalo-ghpages
    git add -A && git commit -m "…" && git push origin gh-pages
@@ -278,12 +306,6 @@ Rebuild and republish `gh-pages` whenever the canvas or the app changes:
    two branches hold unrelated content on purpose) — every update after that checks out the
    existing branch instead, so `gh-pages` keeps its own history rather than being replaced each
    time.
-
-While the repository stays private, GitHub Pages itself may be unavailable regardless of branch
-setup — Pages on a private repo needs a paid plan (GitHub Pro for a personal account, Team or
-Enterprise for an organisation) on most plans, and the option simply will not appear in Settings
-otherwise. Publishing `gh-pages` and enabling Pages are two different steps; the first can happen
-any time, the second may have to wait for the repository to go public.
 
 ## Writing style
 
