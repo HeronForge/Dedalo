@@ -256,18 +256,25 @@ each other:
   "relational database", validation that blocks saving, native TestStand/Python integration)
   didn't hold up and were rewritten or cut.
 
-Both pages embed real proof, not illustrations: `assets/shot-ap-card.png`,
-`assets/shot-variant-popup.png`, `assets/gif-ap-card.gif` and `assets/gif-variant-popup.gif` are
-genuine captures of the app (the AP-06 card with its real crop, the `$PwmDuty` per-variant
-popup), taken with Playwright against the built `dist/wallbox.html` — not mocked up in CSS the
-way `index.html`'s own demos are. `video-pipeline/scripts/capture-landing-assets.mjs` (static
-screenshots) and `capture-landing-clips.mjs` (short `.webm` clips, meant to be converted to GIF
-with ffmpeg's two-pass palette approach — see either script for the exact filter chain) do the
-capturing; both are one-off tools living in the gitignored `video-pipeline/` because they reuse
-its already-installed Playwright and its `cursor-overlay.mjs` helper (a synthetic cursor dot +
-click ripple drawn into the page — headless recordings have no real OS pointer to show one
-otherwise). Re-run them after a UI change makes an existing screenshot stale; both scripts
-document the selectors they rely on inline.
+Both pages embed real proof, not illustrations: the `assets/shot-*.png` and `assets/gif-*.gif`
+files are genuine captures of the app (the AP-20 test-point card with its real crop, the
+`$PwmDuty` per-variant popup, a superseded past revision, reading mode's contents panel), taken
+with Playwright against the built `dist/wallbox.html` — not mocked up in CSS the way
+`index.html`'s own demos are. `video-pipeline/scripts/capture-landing-assets.mjs` (static
+screenshots) and `capture-landing-clips.mjs` (short `.webm` clips — `node
+capture-landing-clips.mjs [clip-name ...]`, no arguments records all of them; convert to GIF
+with ffmpeg's two-pass palette approach, `fps=10`, `scale=1000:-1`, `dither=none` — flat UI
+screenshots compress better without dithering, and text stays crisp) do the capturing; both are
+one-off tools living in the gitignored `video-pipeline/` because they reuse its already-installed
+Playwright and its `cursor-overlay.mjs` helper (a synthetic cursor dot + click ripple drawn into
+the page — headless recordings have no real OS pointer to show one otherwise). Two things worth
+knowing before touching either script: a hover-triggered card is transient — moving the mouse
+onto it to scroll its content fires `mouseleave` and closes it, so scroll it with
+`page.mouse.wheel()` at the cursor's existing position instead; and each clip should scroll its
+target into view with `behavior: 'instant'` and settle there *before* the recording's establishing
+pause, or the clip opens on a held frame of whatever was on screen first (the cover page, most
+of the time) rather than the target. Re-run either script after a UI change makes an existing
+capture stale; both document the selectors they rely on inline.
 
 `LandingPage/DEDALO Landing.dc.html` is the source of the landing page: a Claude Design Canvas
 artboard, editable in Claude's canvas tool. It depends on `support.js` and `window.React` to
