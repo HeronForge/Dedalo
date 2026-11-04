@@ -416,6 +416,12 @@ textarea.inp { resize: vertical; }
 .status-issues-warning { background: #fdf0d5; color: #7a4a12; font-weight: 600; }
 .status-issues-warning:hover { background: #f6e3bf; }
 .status-issues-ok { color: #1d6b32; }
+/* Three months without a check for a newer build: a word, not a plate. Nothing is wrong with
+   the document, and a warning that looks like an error teaches people to ignore both. */
+.status-update { color: #62707e; text-decoration: underline dotted; text-underline-offset: 2px; }
+.status-update:hover { color: #10559a; }
+/* What the newer build brings, in the dialog that offers it. */
+.update-changes { margin: 10px 0; padding-left: 20px; display: flex; flex-direction: column; gap: 5px; color: #35424f; }
 
 /* ---- version and changelog ---- */
 .release { border-top: 1px solid #eef1f5; padding: 8px 0; }
@@ -2293,7 +2299,7 @@ body.print-mode #tsw-root { display: none; }
   };
 
   // src/version.js
-  var APP_VERSION = "1.37.1";
+  var APP_VERSION = "1.38.0";
   var APP_NAME = "DEDALO";
   var APP_TAGLINE = "Test Specification Writer";
   var AUTHOR = {
@@ -2331,6 +2337,14 @@ body.print-mode #tsw-root { display: none; }
     }
   };
   var CHANGELOG = [
+    {
+      version: "1.38.0",
+      date: "2026-11-04",
+      changes: [
+        "File \u203A Check for updates asks the project whether a newer build exists. It asks only when you choose it: this file never reaches the network on its own, which is what lets it live on a bench machine with nothing to explain to whoever approved it. When there is a newer build, it is downloaded empty and your document, its revisions and its pictures are written into it: what you get is a new file, saved like any other save, beside the one you were using. The old file is not touched and not replaced \u2014 keep it until you have opened the new one and seen your document in it. Unsaved changes are settled first, or the new file would carry the document as it was at the last save.",
+        "Once a check is three months old the status bar says so, in a word rather than a plate, and the editor says it once when it opens. A file that has never been checked is not reminded of anything: the clock starts at the first check."
+      ]
+    },
     {
       version: "1.37.1",
       date: "2026-11-04",
@@ -2847,15 +2861,17 @@ body.print-mode #tsw-root { display: none; }
     return html.replace(re, () => `<!--TSW:${name}-->${body}<!--/TSW:${name}-->`);
   }
   var escapeHtml = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
-  function composeFile({ doc, history, assets }) {
-    if (!SHELL) throw new Error("Shell not captured: the file cannot be rebuilt.");
-    const pruned = pruneAssets(doc, assets, history);
-    let html = SHELL;
+  function composeInto(shell, { doc, history, assets }) {
+    let html = shell;
     html = replaceBlock(html, "DOC", JSON.stringify(doc));
     html = replaceBlock(html, "HISTORY", JSON.stringify(history));
-    html = replaceBlock(html, "ASSETS", JSON.stringify(pruned));
+    html = replaceBlock(html, "ASSETS", JSON.stringify(assets));
     html = html.replace(/<title>[\s\S]*?<\/title>/, () => `<title>${escapeHtml(fileTitle(doc))}</title>`);
     return html;
+  }
+  function composeFile({ doc, history, assets }) {
+    if (!SHELL) throw new Error("Shell not captured: the file cannot be rebuilt.");
+    return composeInto(SHELL, { doc, history, assets: pruneAssets(doc, assets, history) });
   }
   var fileTitle = (doc) => {
     const h2 = doc.header || {};
@@ -11306,17 +11322,17 @@ p { orphans: 2; widows: 2; }
     }
   };
   var docFingerprint = (doc) => fingerprint(doc);
-  var read = (storage, key2) => {
+  var read = (storage2, key2) => {
     try {
-      const raw = storage.getItem(key2);
+      const raw = storage2.getItem(key2);
       return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
     }
   };
-  var write = (storage, key2, value) => {
+  var write = (storage2, key2, value) => {
     try {
-      storage.setItem(key2, JSON.stringify(value));
+      storage2.setItem(key2, JSON.stringify(value));
       return { ok: true };
     } catch (err) {
       return { ok: false, reason: reasonFor(err) };
@@ -11328,63 +11344,63 @@ p { orphans: 2; widows: 2; }
       return "the browser storage is full";
     return err && err.message || "the browser refused to write";
   };
-  function saveDraft(storage, key2, draft) {
-    if (!storage) return { ok: false, reason: "this browser keeps no storage for the file" };
+  function saveDraft(storage2, key2, draft) {
+    if (!storage2) return { ok: false, reason: "this browser keeps no storage for the file" };
     const payload = { v: DRAFT_VERSION, ...draft };
-    const first = write(storage, key2, payload);
+    const first = write(storage2, key2, payload);
     if (first.ok) return { ok: true };
-    if (!pruneDrafts(storage, { except: key2 })) return first;
-    const second = write(storage, key2, payload);
+    if (!pruneDrafts(storage2, { except: key2 })) return first;
+    const second = write(storage2, key2, payload);
     return second.ok ? { ok: true, pruned: true } : second;
   }
-  function saveAssets(storage, key2, assets) {
-    if (!storage) return { ok: false, reason: "this browser keeps no storage for the file" };
-    return write(storage, key2 + ASSETS_SUFFIX, assets || {});
+  function saveAssets(storage2, key2, assets) {
+    if (!storage2) return { ok: false, reason: "this browser keeps no storage for the file" };
+    return write(storage2, key2 + ASSETS_SUFFIX, assets || {});
   }
-  function loadDraft(storage, key2) {
-    if (!storage) return null;
-    const draft = read(storage, key2);
+  function loadDraft(storage2, key2) {
+    if (!storage2) return null;
+    const draft = read(storage2, key2);
     if (!draft || draft.v !== DRAFT_VERSION || !draft.doc) return null;
-    return { ...draft, key: key2, assets: read(storage, key2 + ASSETS_SUFFIX) };
+    return { ...draft, key: key2, assets: read(storage2, key2 + ASSETS_SUFFIX) };
   }
-  function dropDraft(storage, key2) {
-    if (!storage) return;
+  function dropDraft(storage2, key2) {
+    if (!storage2) return;
     try {
-      storage.removeItem(key2);
-      storage.removeItem(key2 + ASSETS_SUFFIX);
+      storage2.removeItem(key2);
+      storage2.removeItem(key2 + ASSETS_SUFFIX);
     } catch {
     }
   }
-  function listDrafts(storage) {
-    if (!storage) return [];
+  function listDrafts(storage2) {
+    if (!storage2) return [];
     const out = [];
     try {
-      for (let i = 0; i < storage.length; i++) {
-        const key2 = storage.key(i);
+      for (let i = 0; i < storage2.length; i++) {
+        const key2 = storage2.key(i);
         if (!key2 || !key2.startsWith(PREFIX) || key2.endsWith(ASSETS_SUFFIX)) continue;
-        const draft = read(storage, key2);
+        const draft = read(storage2, key2);
         if (draft && draft.v === DRAFT_VERSION && draft.doc) out.push({ ...draft, key: key2 });
       }
     } catch {
     }
     return out.sort((a, b) => String(b.at).localeCompare(String(a.at)));
   }
-  function findDraft(storage, doc, place2 = currentPlace()) {
+  function findDraft(storage2, doc, place2 = currentPlace()) {
     const base = docFingerprint(doc);
-    const direct = loadDraft(storage, identityKey(doc, place2));
+    const direct = loadDraft(storage2, identityKey(doc, place2));
     if (direct && (direct.base === base || isNamed(doc))) return direct;
     if (!isNamed(doc)) return null;
-    const match = listDrafts(storage).find((d) => d.base === base);
-    return match ? loadDraft(storage, match.key) : null;
+    const match = listDrafts(storage2).find((d) => d.base === base);
+    return match ? loadDraft(storage2, match.key) : null;
   }
-  function pruneDrafts(storage, { now: now2 = Date.now(), except = "" } = {}) {
-    if (!storage) return 0;
-    const drafts = listDrafts(storage).filter((d) => d.key !== except);
+  function pruneDrafts(storage2, { now: now2 = Date.now(), except = "" } = {}) {
+    if (!storage2) return 0;
+    const drafts = listDrafts(storage2).filter((d) => d.key !== except);
     const stale = (d) => !d.at || now2 - Date.parse(d.at) > MAX_AGE_DAYS * 864e5;
     let dropped = 0;
     drafts.forEach((d, i) => {
       if (stale(d) || i >= MAX_DRAFTS - 1) {
-        dropDraft(storage, d.key);
+        dropDraft(storage2, d.key);
         dropped++;
       }
     });
@@ -11398,30 +11414,30 @@ p { orphans: 2; widows: 2; }
     const h2 = (doc || {}).header || {};
     return PREFIX2 + fingerprint([h2.documentCode || "", h2.title || ""].join("|"));
   };
-  var read2 = (storage, key2) => {
+  var read2 = (storage2, key2) => {
     try {
-      const raw = storage && storage.getItem(key2);
+      const raw = storage2 && storage2.getItem(key2);
       return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
     }
   };
-  var write2 = (storage, key2, value) => {
+  var write2 = (storage2, key2, value) => {
     try {
-      if (!storage) return false;
-      storage.setItem(key2, JSON.stringify(value));
+      if (!storage2) return false;
+      storage2.setItem(key2, JSON.stringify(value));
       return true;
     } catch {
       return false;
     }
   };
-  function readNotes(storage, doc) {
-    const kept = read2(storage, keyOf2(doc));
+  function readNotes(storage2, doc) {
+    const kept = read2(storage2, keyOf2(doc));
     return kept && Array.isArray(kept.notes) ? { notes: kept.notes, changed: kept.changed || "", exported: kept.exported || "" } : { notes: [], changed: "", exported: "" };
   }
-  var writeNotes = (storage, doc, state2) => write2(storage, keyOf2(doc), { notes: state2.notes, changed: state2.changed || "", exported: state2.exported || "" });
-  var readAuthor = (storage) => read2(storage, AUTHOR_KEY) || { name: "", color: "" };
-  var writeAuthor = (storage, author) => write2(storage, AUTHOR_KEY, { name: author.name || "", color: author.color || "" });
+  var writeNotes = (storage2, doc, state2) => write2(storage2, keyOf2(doc), { notes: state2.notes, changed: state2.changed || "", exported: state2.exported || "" });
+  var readAuthor = (storage2) => read2(storage2, AUTHOR_KEY) || { name: "", color: "" };
+  var writeAuthor = (storage2, author) => write2(storage2, AUTHOR_KEY, { name: author.name || "", color: author.color || "" });
 
   // src/ui/notes.js
   var state = {
@@ -12795,8 +12811,8 @@ p { orphans: 2; widows: 2; }
   var SNAPSHOT_INTERVAL = 15e3;
   var net = { on: false, reason: "", at: "", pictures: true };
   var recoveryStatus = () => net;
-  function setupRecovery(store, { storage = safeStorage(), interval = SNAPSHOT_INTERVAL } = {}) {
-    if (!storage) {
+  function setupRecovery(store, { storage: storage2 = safeStorage(), interval = SNAPSHOT_INTERVAL } = {}) {
+    if (!storage2) {
       net.on = false;
       net.reason = "this browser keeps no storage for a file opened this way";
       return { stop() {
@@ -12810,14 +12826,14 @@ p { orphans: 2; widows: 2; }
     let recovering = false;
     net.on = true;
     net.reason = "";
-    const found = findDraft(storage, store.state.doc);
-    pruneDrafts(storage, { except: key2 });
+    const found = findDraft(storage2, store.state.doc);
+    pruneDrafts(storage2, { except: key2 });
     const snapshot = () => {
       if (!net.on || paused || !store.state.dirty || !changed) return;
       const doc = store.state.doc;
       const header = doc.header || {};
       const at = (/* @__PURE__ */ new Date()).toISOString();
-      const written = saveDraft(storage, key2, {
+      const written = saveDraft(storage2, key2, {
         at,
         base,
         title: header.title || "",
@@ -12834,12 +12850,12 @@ p { orphans: 2; widows: 2; }
         return;
       }
       net.at = at;
-      if (store.state.assets !== openedAssets) net.pictures = saveAssets(storage, key2, store.state.assets).ok;
+      if (store.state.assets !== openedAssets) net.pictures = saveAssets(storage2, key2, store.state.assets).ok;
       store.refreshLight();
       changed = false;
     };
     const settle = () => {
-      dropDraft(storage, key2);
+      dropDraft(storage2, key2);
       key2 = identityKey(store.state.doc);
       base = docFingerprint(store.state.doc);
       openedAssets = store.state.assets;
@@ -12873,7 +12889,7 @@ p { orphans: 2; widows: 2; }
     };
     window.addEventListener("beforeunload", onLeave);
     document.addEventListener("visibilitychange", onHide);
-    if (found) askAbout(store, storage, found, { restore: restore2, dismiss: () => {
+    if (found) askAbout(store, storage2, found, { restore: restore2, dismiss: () => {
       paused = false;
     } });
     else paused = false;
@@ -12888,7 +12904,7 @@ p { orphans: 2; widows: 2; }
       found: !!found
     };
   }
-  function askAbout(store, storage, draft, { restore: restore2, dismiss: dismiss2 }) {
+  function askAbout(store, storage2, draft, { restore: restore2, dismiss: dismiss2 }) {
     const stale = draft.base !== docFingerprint(store.state.doc);
     const m = modal({
       title: "Unsaved changes were found from a previous session",
@@ -12921,7 +12937,7 @@ p { orphans: 2; widows: 2; }
           dismiss2();
         }, { title: "Leave the draft where it is and decide later" }),
         button("Discard the draft", () => {
-          dropDraft(storage, draft.key);
+          dropDraft(storage2, draft.key);
           m.close();
           dismiss2();
         }, { class: "btn-danger" }),
@@ -13085,6 +13101,246 @@ p { orphans: 2; widows: 2; }
     }, "\u{1F4CC}");
   }
 
+  // src/io/update.js
+  var UPDATE_URL = "https://raw.githubusercontent.com/HeronForge/Dedalo/main/update.json";
+  var RELEASE_PAGE = "https://github.com/HeronForge/Dedalo";
+  var LAST_CHECK_KEY = "tsw.update.checked";
+  var CHECK_INTERVAL_DAYS = 90;
+  var DAY = 24 * 60 * 60 * 1e3;
+  function compareVersions(a, b) {
+    const parts = (v) => String(v || "").trim().split(".").map((n) => /^\d+$/.test(n) ? Number(n) : -1);
+    const x = parts(a);
+    const y = parts(b);
+    for (let i = 0; i < Math.max(x.length, y.length); i++) {
+      const d = (x[i] ?? 0) - (y[i] ?? 0);
+      if (d) return d < 0 ? -1 : 1;
+    }
+    return 0;
+  }
+  var isNewer = (candidate, current) => compareVersions(candidate, current) > 0;
+  function lastChecked(storage2) {
+    try {
+      const raw = storage2 && storage2.getItem(LAST_CHECK_KEY);
+      const at = raw ? Number(JSON.parse(raw).at) : 0;
+      return at > 0 ? at : null;
+    } catch {
+      return null;
+    }
+  }
+  function rememberCheck(storage2, { at = Date.now(), version = "" } = {}) {
+    try {
+      if (!storage2) return false;
+      storage2.setItem(LAST_CHECK_KEY, JSON.stringify({ at, version }));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  function checkOverdue(storage2, now2 = Date.now()) {
+    const at = lastChecked(storage2);
+    if (!at) return false;
+    return now2 - at >= CHECK_INTERVAL_DAYS * DAY;
+  }
+  function daysSinceCheck(storage2, now2 = Date.now()) {
+    const at = lastChecked(storage2);
+    return at ? Math.floor((now2 - at) / DAY) : null;
+  }
+  function readAnnouncement(value) {
+    if (!value || typeof value !== "object") return null;
+    const version = String(value.version || "").trim();
+    if (!/^\d+(\.\d+)*$/.test(version)) return null;
+    const app = String(value.app || "").trim();
+    return {
+      version,
+      date: String(value.date || "").trim(),
+      changes: Array.isArray(value.changes) ? value.changes.filter((c) => typeof c === "string") : [],
+      // Only from the project's own site: this address is fetched and the answer becomes the
+      // program the reader will open next, so a redirected one is not worth being lenient about.
+      app: /^https:\/\/heronforge\.github\.io\/Dedalo\//.test(app) ? app : ""
+    };
+  }
+  async function fetchAnnouncement(fetchImpl = fetch, url = UPDATE_URL) {
+    try {
+      const res = await fetchImpl(url, { cache: "no-store" });
+      if (!res.ok) return { ok: false, announcement: null, error: `the server answered ${res.status}` };
+      const announcement = readAnnouncement(await res.json());
+      if (!announcement) return { ok: false, announcement: null, error: "the answer was not an update announcement" };
+      return { ok: true, announcement, error: "" };
+    } catch (err) {
+      return { ok: false, announcement: null, error: err && err.message ? err.message : "no answer" };
+    }
+  }
+  async function buildUpdatedFile(state2, announcement, fetchImpl = fetch) {
+    if (!announcement || !announcement.app) throw new Error("The announcement does not say where the build is.");
+    const res = await fetchImpl(announcement.app, { cache: "no-store" });
+    if (!res.ok) throw new Error(`The build could not be downloaded: the server answered ${res.status}.`);
+    const shell = await res.text();
+    if (!/<!--TSW:DOC-->/.test(shell)) throw new Error("What was downloaded is not a DEDALO build: it has no data block.");
+    const pruned = pruneAssets(state2.doc, state2.assets, state2.history);
+    return {
+      html: composeInto(shell, { ...state2, assets: pruned }),
+      name: suggestedFileName(state2.doc).replace(/\.html$/, `_v${announcement.version}.html`)
+    };
+  }
+
+  // src/ui/update.js
+  function storage() {
+    try {
+      return window.localStorage;
+    } catch {
+      return null;
+    }
+  }
+  var updateOverdue = () => checkOverdue(storage());
+  var updateAge = () => daysSinceCheck(storage());
+  var stampLine = () => {
+    const at = lastChecked(storage());
+    if (!at) return "This file has never been checked against the project.";
+    const days = daysSinceCheck(storage());
+    const when = formatDate2(new Date(at).toISOString().slice(0, 10));
+    return days === 0 ? `Last checked today (${when}).` : `Last checked ${days} day${days === 1 ? "" : "s"} ago (${when}).`;
+  };
+  function checkForUpdates(store, { save: save2 } = {}) {
+    const body = h("div", {});
+    const actions2 = h("span", {});
+    const m = modal({ title: "Check for updates", content: body, actions: [actions2] });
+    const show2 = (...nodes) => {
+      body.replaceChildren(...nodes.filter(Boolean));
+    };
+    const act = (...nodes) => {
+      actions2.replaceChildren(...nodes.filter(Boolean));
+    };
+    const offer = () => {
+      show2(
+        h(
+          "p",
+          {},
+          `This file is ${APP_NAME} ${APP_VERSION}. Checking asks the project's page on GitHub `,
+          "which build is the latest one. Nothing is sent: the question is which version exists, and ",
+          "the answer is a version number."
+        ),
+        h("p", { class: "hint" }, stampLine(), " Nothing is ever checked on its own \u2014 only when you ask here.")
+      );
+      act(
+        button("Close", () => m.close()),
+        button("Check now", run2, { class: "btn-primary" })
+      );
+    };
+    const run2 = async () => {
+      show2(h("p", {}, "Asking the project\u2026"));
+      act(button("Close", () => m.close()));
+      const { ok, announcement, error } = await fetchAnnouncement();
+      if (!ok) {
+        show2(
+          h("p", {}, "The project could not be reached: ", h("strong", {}, error), "."),
+          h(
+            "p",
+            { class: "hint" },
+            "A machine with no way out to the internet is the normal case for a test bench. ",
+            "The latest build is always at ",
+            h("a", { href: RELEASE_PAGE, target: "_blank", rel: "noreferrer" }, RELEASE_PAGE),
+            "."
+          )
+        );
+        return;
+      }
+      rememberCheck(storage(), { version: announcement.version });
+      store.refreshLight();
+      if (!isNewer(announcement.version, APP_VERSION)) {
+        show2(
+          h("p", {}, h("strong", {}, `${APP_NAME} ${APP_VERSION}`), " is the latest build."),
+          h("p", { class: "hint" }, "Checked just now; the next reminder is in ", String(CHECK_INTERVAL_DAYS), " days.")
+        );
+        return;
+      }
+      found(announcement);
+    };
+    const found = (announcement) => {
+      const dirty = store.state.dirty;
+      show2(
+        h(
+          "p",
+          {},
+          h("strong", {}, `${APP_NAME} ${announcement.version}`),
+          announcement.date ? ` \xB7 ${formatDate2(announcement.date)}` : "",
+          " is available. This file is ",
+          APP_VERSION,
+          "."
+        ),
+        announcement.changes.length ? h("ul", { class: "update-changes" }, ...announcement.changes.slice(0, 8).map((c) => h("li", {}, c))) : null,
+        h(
+          "p",
+          {},
+          "Updating downloads the new build with this document already inside it, as a new file. ",
+          "The file you are reading is not touched and not replaced: keep it until the new one has opened and ",
+          "you have seen your document in it."
+        ),
+        dirty ? h("p", { class: "hint hint-warning" }, "There are unsaved changes. Save first, or the new file would carry the document as it was at the last save.") : h("p", { class: "hint" }, "The document is saved: the new file will carry exactly what is on screen."),
+        !announcement.app ? h(
+          "p",
+          { class: "hint hint-warning" },
+          "The announcement does not name a build to download. Get it from ",
+          h("a", { href: RELEASE_PAGE, target: "_blank", rel: "noreferrer" }, RELEASE_PAGE),
+          "."
+        ) : null
+      );
+      act(
+        button("Not now", () => m.close()),
+        dirty && save2 ? button("Save first", () => {
+          save2(store);
+          found(announcement);
+        }, { class: "btn-primary" }) : announcement.app ? button(`Download ${APP_NAME} ${announcement.version} with this document`, () => fetchBuild(announcement), { class: "btn-primary" }) : null
+      );
+    };
+    const fetchBuild = async (announcement) => {
+      show2(
+        h("p", {}, `Downloading ${APP_NAME} ${announcement.version} and writing this document into it\u2026`),
+        h("p", { class: "hint" }, "A build is about a megabyte and a half; with pictures the file that comes out is larger.")
+      );
+      act(button("Close", () => m.close()));
+      try {
+        const { html, name } = await buildUpdatedFile(store.state, announcement);
+        const { bytes } = download(html, name, "text/html;charset=utf-8");
+        show2(
+          h("p", {}, h("strong", {}, name), " has been downloaded."),
+          h(
+            "p",
+            {},
+            "Open it and check that the document is all there \u2014 the revisions, the pictures, the variants. ",
+            "Only then is the old file safe to replace with it. Notes live in this browser and follow the specification, ",
+            "not the file, so they are found again by the new one."
+          ),
+          h("p", { class: "hint" }, `${APP_NAME} ${announcement.version} \xB7 ${Math.round(bytes / 1024)} KB`)
+        );
+      } catch (err) {
+        show2(
+          h("p", {}, "The update could not be prepared: ", h("strong", {}, err.message), "."),
+          h(
+            "p",
+            { class: "hint" },
+            "Nothing was changed here. The build can also be downloaded by hand from ",
+            h("a", { href: RELEASE_PAGE, target: "_blank", rel: "noreferrer" }, RELEASE_PAGE),
+            ", and this document carried into it by saving this file and opening it there."
+          )
+        );
+      }
+    };
+    offer();
+  }
+  function updateButton(store, commands) {
+    const days = updateAge();
+    return h("button", {
+      type: "button",
+      class: "status-issues status-update",
+      title: `The last check for a newer build was ${days} days ago. Click to check now \u2014 nothing is ever checked on its own.`,
+      onClick: () => checkForUpdates(store, commands)
+    }, "Updates unchecked");
+  }
+  function remindAboutUpdates() {
+    if (!updateOverdue()) return;
+    toast(`It has been ${updateAge()} days since this file was checked against the project. File \u203A Check for updates asks \u2014 nothing is ever checked on its own.`, "info", 9e3);
+  }
+
   // src/ui/app.js
   var GROUPS = [
     {
@@ -13218,6 +13474,8 @@ p { orphans: 2; widows: 2; }
         issuesButton(store, counts),
         h("span", {}, `Images ${formatBytes(weight)}`),
         notesCount() ? notesButton(store) : null,
+        // A quarter without a check, said once and quietly, where the state of the file is read.
+        updateOverdue() ? updateButton(store, { save }) : null,
         h("span", { class: net2.on ? "muted" : "status-nonet", title: recoveryHint(net2) }, recoveryText(net2))
       ));
       markTitle(store);
@@ -13226,6 +13484,7 @@ p { orphans: 2; widows: 2; }
     store.subscribeLight(drawChrome);
     draw2();
     shortcuts(store, { setNav });
+    remindAboutUpdates();
   }
   function commandBar(store, { setNav }) {
     const doc = store.resolvedDoc();
@@ -13291,8 +13550,14 @@ p { orphans: 2; widows: 2; }
           ["Import data\u2026", () => importJson(store)],
           null,
           ["Export notes (JSON)", () => exportNotes(store), { title: "Download the notes file, named after the specification" }],
-          ["Import notes\u2026", () => importNotes(store), { title: "Read a notes file written on this specification and merge it with yours" }]
-        ], { title: "Open, print, export, import" })
+          ["Import notes\u2026", () => importNotes(store), { title: "Read a notes file written on this specification and merge it with yours" }],
+          null,
+          // The one thing here that reaches the network, and only when it is chosen: see
+          // io/update.js. A file on a bench machine must never ask anything of its own accord.
+          ["Check for updates\u2026", () => checkForUpdates(store, { save }), {
+            title: "Ask the project whether a newer build exists. Nothing is ever checked on its own."
+          }]
+        ], { title: "Open, print, export, import, update" })
       ),
       store.activeVariant() ? h(
         "div",

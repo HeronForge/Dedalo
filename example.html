@@ -416,6 +416,12 @@ textarea.inp { resize: vertical; }
 .status-issues-warning { background: #fdf0d5; color: #7a4a12; font-weight: 600; }
 .status-issues-warning:hover { background: #f6e3bf; }
 .status-issues-ok { color: #1d6b32; }
+/* Three months without a check for a newer build: a word, not a plate. Nothing is wrong with
+   the document, and a warning that looks like an error teaches people to ignore both. */
+.status-update { color: #62707e; text-decoration: underline dotted; text-underline-offset: 2px; }
+.status-update:hover { color: #10559a; }
+/* What the newer build brings, in the dialog that offers it. */
+.update-changes { margin: 10px 0; padding-left: 20px; display: flex; flex-direction: column; gap: 5px; color: #35424f; }
 
 /* ---- version and changelog ---- */
 .release { border-top: 1px solid #eef1f5; padding: 8px 0; }
@@ -1122,8 +1128,8 @@ body.print-mode #tsw-root { display: none; }
 </head>
 <body>
 <noscript>This document needs JavaScript enabled to be viewed and edited.</noscript>
-<!--TSW:DOC--><script type="application/json" id="tsw-doc">{"schemaVersion":2,"header":{"title":"End of line test specification","company":"Acme Electronics Ltd.","logoAssetId":"demoacmelogo001","project":"P-2451","product":"LCU-200 lighting control unit","documentCode":"SPC-TEST-0042","confidentiality":"Confidential – internal use","disclaimer":"This document contains information owned by Acme Electronics Ltd. It is issued for the sole purpose of testing the LCU-200 and may not be reproduced, disclosed to third parties or used for any other purpose without written authorisation.\n\nThe test limits stated here apply to the production bench described in the appendices. Any deviation must be agreed with the test engineering department before the line is released.","signatories":[{"id":"sig_ih4d1wpwb6","role":"Prepared by","name":"M. Rossi"},{"id":"sig_5mpwhudpac","role":"Checked by","name":"A. Bianchi"},{"id":"sig_mu6o3503at","role":"Approved by","name":"L. Verdi"}]},"settings":{"noDirectEditing":false,"chapterOrder":[]},"revision":{"number":"02","date":"2026-08-30","author":"M. Rossi","reason":"Added the 24 V variant","status":"draft"},"description":{"product":"The LCU-200 drives the exterior lighting of the vehicle. It takes its commands from the CAN bus, drives four high current outputs and handles a local service button.\n\nConnector J1 carries supply and bus, connector J2 the power outputs.","testing":"The end of line test covers supply, communication, power outputs and the local mechanical command.\n\nUnless stated otherwise, every measurement is taken at room temperature with a regulated supply."},"references":[{"id":"ref_t3vqzrk3ew","title":"LCU-200 hardware specification","code":"SPC-HW-0021","revision":"Rev. 04","notes":""},{"id":"ref_mz2b6ph5dn","title":"Interface Control Document — vehicle CAN bus","code":"ICD-CAN-LCU","revision":"Rev. 12","notes":""},{"id":"ref_756rn8lal6","title":"End of line testing procedure","code":"PRC-QAL-007","revision":"Rev. 02","notes":""}],"variables":[{"id":"var_7q2hj4zj0y","name":"Vbatt","type":"number","unit":"V","value":"13.5","min":"","max":"","allowedValues":[],"description":"Nominal supply voltage used for testing."},{"id":"var_pgz1bg4y8f","name":"IquiescentMax","type":"number","unit":"mA","value":"45","min":"","max":"","allowedValues":[],"description":"Highest current allowed at rest."},{"id":"var_yjuhzo71mx","name":"Protocol","type":"enum","unit":"","value":"CAN","min":"","max":"","allowedValues":["CAN","LIN"],"description":"Bus used to talk to the unit during the test."},{"id":"var_1j0lpggww7","name":"AmbientTemp","type":"range","unit":"°C","value":"","min":"15","max":"30","allowedValues":[],"description":"Temperature range allowed in the test area."},{"id":"var_69y8089os4","name":"DebugMode","type":"boolean","unit":"","value":"false","min":"","max":"","allowedValues":[],"description":"When true, the bench records the full CAN trace."},{"id":"var_lxvvc9qolo","name":"FwPattern","type":"text","unit":"","value":"^LCU200 v\\d+\\.\\d+\\.\\d+$","min":"","max":"","allowedValues":[],"description":"Accepted shape of the firmware version string; changed here when the release family changes."}],"protocols":[{"id":"prt_55x1lkqzta","name":"LCU application frames","family":"Application specific","description":"The frames the LCU-200 defines for its own functions. They are sent on the vehicle CAN bus outside any diagnostic session and are answered immediately.","requestFormat":"Identifier 0x2E0 + 8 data bytes\nByte 0: service (0x2E write, 0x22 read)\nBytes 1-2: parameter identifier, big endian\nBytes 3-7: payload, padded with 0x00","responseFormat":"Identifier 0x2E8 + 8 data bytes\nByte 0: service + 0x40 on success\nBytes 1-2: parameter identifier echoed\nBytes 3-7: value, padded with 0x00","rules":[{"id":"chr_y7orngg9fe","name":"Answer within","value":"50","unit":"ms"},{"id":"chr_sif2wz0vbi","name":"Padding byte","value":"0x00","unit":""},{"id":"chr_ukevmxsuiq","name":"Byte order","value":"big endian","unit":""}],"notes":"No session and no security access: these frames are always available.","referenceId":""},{"id":"prt_8h3vzfx40q","name":"UDS over ISO-TP","family":"ISO 14229-1 / ISO 15765-2","description":"Diagnostic services, used for the fault memory and the identification data. Requests longer than seven bytes are segmented by ISO-TP.","requestFormat":"Single frame: PCI 0x0n + service + sub-function\nFirst frame: 0x1LLL for a payload longer than 7 bytes, then consecutive frames 0x2n","responseFormat":"Positive: service + 0x40, then the payload\nNegative: 0x7F + service + NRC (0x31 request out of range, 0x22 conditions not correct)","rules":[{"id":"chr_7kg6saw6vs","name":"P2 server","value":"50","unit":"ms"},{"id":"chr_ieoot7taop","name":"P2* extended","value":"5000","unit":"ms"},{"id":"chr_wm8lsbalqs","name":"Block size","value":"8","unit":"frames"},{"id":"chr_r8a5okwhp9","name":"Separation time","value":"10","unit":"ms"}],"notes":"A pending answer (NRC 0x78) restarts the P2* timer: the bench waits, it does not fail the step.","referenceId":""}],"variants":[{"id":"vnt_3fl0bk6srz","name":"LCU-200 12 V","description":"Base version, 12 V nominal supply.","overlay":[]},{"id":"vnt_45so9obkvc","name":"LCU-200 24 V","description":"Version for commercial vehicles: 24 V supply and no service button.","overlay":[{"op":"set","path":["variables","#var_7q2hj4zj0y","value"],"value":"27"},{"op":"set","path":["variables","#var_pgz1bg4y8f","value"],"value":"30"},{"op":"remove","path":["stages","#stg_ol1y66ke3r"]},{"op":"set","path":["stages","#stg_7n0uk0jo3b","prerequisites"],"value":["stg_dhbo4fshw2","stg_l4jx1cv1zn"]},{"op":"set","path":["stages","#stg_dhbo4fshw2","tests","#tc_3ktlwiu137","steps","#stp_o3clwtgs1c","measurement","expected","max"],"value":{"mode":"constant","value":"0.8"}}]}],"resources":[{"id":"res_1z3cuwe6q5","name":"Programmable DC power supply","category":"Power","characteristics":[{"id":"chr_mr5mxt4h18","name":"Voltage","value":"0 … 32","unit":"V"},{"id":"chr_hze4rjqxx6","name":"Current","value":"0 … 10","unit":"A"},{"id":"chr_3465ldyuyp","name":"Current readback","value":"±0.5","unit":"%"}],"notes":"","averageTime":"1.5"},{"id":"res_m9vw0woghx","name":"6½ digit multimeter","category":"Electrical measurement","characteristics":[{"id":"chr_2sbnpsea2t","name":"DC voltage","value":"0 … 100","unit":"V"},{"id":"chr_ub5lc1azpw","name":"Accuracy","value":"±0.02","unit":"%"}],"notes":"","averageTime":"0.8"},{"id":"res_3jh1n7oeyv","name":"Bench CAN interface","category":"Communication","characteristics":[{"id":"chr_jecyjqbpdc","name":"Channels","value":"2","unit":""},{"id":"chr_l6qczakviq","name":"Bit rate","value":"up to 1","unit":"Mbit/s"}],"notes":"","averageTime":"0.3"},{"id":"res_gxkgum5pzh","name":"Pneumatic actuator with load cell","category":"Mechanical actuation","characteristics":[{"id":"chr_k7pkfwnfm4","name":"Force","value":"0 … 50","unit":"N"},{"id":"chr_iosarqy2f8","name":"Stroke","value":"0 … 20","unit":"mm"}],"notes":"","averageTime":"2"}],"interfaces":[{"id":"itf_m2da59q2ix","name":"Vehicle CAN bus","type":"CAN 2.0B","parameters":[{"id":"chr_fgflbc8x0l","name":"Bit rate","value":"500","unit":"kbit/s"},{"id":"chr_bfv81nkq7o","name":"Termination","value":"120","unit":"Ω"},{"id":"chr_wy841rk8yq","name":"Application protocol","value":"UDS over ISO-TP","unit":""}],"pointIds":["pt_86tuyzsmsh"],"resourceId":"res_3jh1n7oeyv","notes":""},{"id":"itf_y49zqojjwi","name":"Service console","type":"UART","parameters":[{"id":"chr_87jxpzy3iu","name":"Baud rate","value":"115200","unit":"bit/s"},{"id":"chr_gkj578vqov","name":"Frame","value":"8N1","unit":""},{"id":"chr_6m31gk1vk9","name":"Levels","value":"3.3","unit":"V"}],"pointIds":["pt_86tuyzsmsh"],"resourceId":"res_3jh1n7oeyv","notes":""}],"commands":[{"id":"cmd_78am7ovihu","name":"Read supply voltage","interfaceId":"itf_m2da59q2ix","protocolId":"prt_55x1lkqzta","address":"0x22 0xF1 0x90 (DID VBATT)","requestFormat":"22 F1 90","responseFormat":"62 F1 90 <uint16>","negativeResponse":"7F 22 31 — request out of range","encoding":"uint16, LSB = 10 mV","example":"Response 62 F1 90 05 46 → 13.50 V","notes":"","nominalTime":"0.2","referenceId":"","decoding":{"formula":"","unit":""}},{"id":"cmd_svpo1gw49o","name":"Switch low beam on","interfaceId":"itf_m2da59q2ix","protocolId":"prt_55x1lkqzta","address":"0x2E 0x40 0x01","requestFormat":"2E 40 01 <state>","responseFormat":"6E 40 01","negativeResponse":"7F 2E 22 — conditions not correct (unit not powered)","encoding":"state: 00 = off, 01 = on","example":"2E 40 01 01 → switches on","notes":"","nominalTime":"0.15","referenceId":"","decoding":{"formula":"","unit":""}},{"id":"cmd_c9g7vnwvrc","name":"Read fault codes","interfaceId":"itf_m2da59q2ix","protocolId":"prt_8h3vzfx40q","address":"0x19 0x02","requestFormat":"19 02 08","responseFormat":"59 02 <DTC list>","negativeResponse":"","encoding":"3 byte DTC plus status","example":"59 02 FF → no code stored","notes":"","nominalTime":"0.4","referenceId":"","decoding":{"formula":"","unit":""}},{"id":"cmd_z1sp54rc8l","name":"Read firmware version","interfaceId":"itf_y49zqojjwi","protocolId":"","address":"text command \"ver\"","requestFormat":"ver\\r\\n","responseFormat":"LCU200 vX.Y.Z","negativeResponse":"","encoding":"ASCII","example":"LCU200 v1.4.0","notes":"","nominalTime":"0.6","referenceId":"","decoding":{"formula":"","unit":""}}],"points":[{"id":"pt_fgyz6ndwtp","name":"Battery positive","connector":"J1","pin":"1","signal":"VBAT","contactType":"Ø 2 mm spring probe","characteristics":[{"id":"chr_vgoymrrffn","name":"Max current","value":"10","unit":"A"},{"id":"chr_56081qiss1","name":"Contact force","value":"2.5","unit":"N"},{"id":"chr_z1dl1dvfce","name":"Contact resistance","value":"< 20","unit":"mΩ"}],"markers":[{"id":"mk_mjh0rphnxa","imageId":"img_0g0xvt9mzw","x":0.695,"y":0.19,"area":0.15}],"notes":""},{"id":"pt_i6tol84qfc","name":"Ground","connector":"J1","pin":"2","signal":"GND","contactType":"Ø 2 mm spring probe","characteristics":[{"id":"chr_07ar8zwiiz","name":"Max current","value":"10","unit":"A"},{"id":"chr_8b912xivl1","name":"Contact force","value":"2.5","unit":"N"}],"markers":[{"id":"mk_7lezcwzjqe","imageId":"img_0g0xvt9mzw","x":0.83,"y":0.19,"area":0.3}],"notes":""},{"id":"pt_vwym5zcf8t","name":"Left low beam output","connector":"J2","pin":"5","signal":"OUT_LOW_L","contactType":"Ø 1.5 mm spring probe","characteristics":[{"id":"chr_wxnv2uxogc","name":"Max current","value":"6","unit":"A"},{"id":"chr_xy6x2rioia","name":"Contact force","value":"1.8","unit":"N"}],"markers":[{"id":"mk_vxvpld5ei4","imageId":"img_0g0xvt9mzw","x":0.7,"y":0.68,"area":0.3}],"notes":""},{"id":"pt_j9ucy4yo0s","name":"Driver output test pad","connector":"TP12","pin":"—","signal":"DRV_OUT","contactType":"Ø 1 mm spring probe","characteristics":[{"id":"chr_21pzixefp3","name":"Max current","value":"0.1","unit":"A"},{"id":"chr_jacnldvet4","name":"Contact force","value":"1.2","unit":"N"}],"markers":[{"id":"mk_t9u12nc1jy","imageId":"img_0g0xvt9mzw","x":0.487,"y":0.508,"area":0.3}],"notes":""},{"id":"pt_oga8eybpey","name":"Service button SW1","connector":"—","pin":"—","signal":"SW1","contactType":"Ø 6 mm rubber tip","characteristics":[{"id":"chr_9jh9vjnbmx","name":"Pressing force","value":"5 ± 1","unit":"N"},{"id":"chr_17gcsxqmeq","name":"Travel","value":"1.2","unit":"mm"}],"markers":[{"id":"mk_9y74elhdi2","imageId":"img_0g0xvt9mzw","x":0.235,"y":0.7,"area":0.3}],"notes":""},{"id":"pt_86tuyzsmsh","name":"CAN bus (CANH/CANL)","connector":"J1","pin":"5 / 6","signal":"CANH / CANL","contactType":"Spring probe pair","characteristics":[{"id":"chr_wh37ety3rb","name":"Line impedance","value":"120","unit":"Ω"}],"markers":[{"id":"mk_0af7iig8j4","imageId":"img_0g0xvt9mzw","x":0.765,"y":0.255,"area":0.3}],"notes":""}],"images":[{"id":"img_0g0xvt9mzw","name":"LCU-200 board — component side","assetId":"demoboardpcb001","caption":"Position of the contact points on the test bench."}],"glossary":[],"stages":[{"id":"stg_bqnyctokce","name":"Set-up and power-up","description":"Connect the board to the bench, power it up and check the quiescent current.","kind":"test","prerequisites":[],"exclusions":{"mode":"none","stageIds":[]},"heldStimuli":[],"tests":[{"id":"tc_c3xkna65qp","name":"Supply and current draw","purpose":"Check that the unit powers up and stays within the quiescent current limit.","kpi":true,"steps":[{"id":"stp_pwzz4azig1","description":"Power the unit up.","type":"stageCall","wait":{"value":{"mode":"constant","value":""},"unit":"s"},"note":"","calledStageId":"stg_r1r2zexq3c","imageId":""},{"id":"stp_bv342fbqgf","description":"Measure the current drawn at rest.","type":"measurement","wait":{"value":{"mode":"constant","value":""},"unit":"s"},"note":"","calledStageId":"","imageId":"","measurement":{"description":"Supply current","pointIds":["pt_fgyz6ndwtp"],"resourceId":"res_1z3cuwe6q5","parameters":[],"commandId":"","expected":{"mode":"minmax","min":{"mode":"constant","value":"0"},"max":{"mode":"variable","variableId":"var_pgz1bg4y8f"},"nominal":{"mode":"constant","value":""},"tolerance":{"mode":"constant","value":""},"toleranceType":"absolute","unit":"mA"}}},{"id":"stp_7kwazud5jo","description":"Read the firmware version from the service console.","type":"measurement","wait":{"value":{"mode":"constant","value":""},"unit":"s"},"note":"Record the version on the test report.","calledStageId":"","imageId":"","measurement":{"description":"Firmware version","pointIds":[],"resourceId":"","parameters":[],"commandId":"cmd_z1sp54rc8l","expected":{"kind":"string","text":{"mode":"variable","variableId":"var_lxvvc9qolo"},"regex":true,"caseSensitive":true,"stringComparison":"EQ","mode":"minmax","min":{"mode":"constant","value":""},"max":{"mode":"constant","value":""},"nominal":{"mode":"constant","value":""},"tolerance":{"mode":"constant","value":""},"toleranceType":"absolute","unit":"","booleanValue":"true"}}}]}]},{"id":"stg_dhbo4fshw2","name":"Lighting functions","description":"Drive the power outputs over the bus and check the output voltages.","kind":"test","prerequisites":["stg_bqnyctokce"],"exclusions":{"mode":"none","stageIds":[]},"heldStimuli":[],"tests":[{"id":"tc_3ktlwiu137","name":"Low beam","purpose":"Check that the left low beam output switches on when commanded over CAN.","kpi":true,"steps":[{"id":"stp_3603ljuy3a","description":"Switch the low beam on over the bus and check the output voltage.","type":"stimulusMeasurement","wait":{"value":"200","unit":"ms"},"note":"","calledStageId":"","imageId":"","stimulus":{"description":"Send the switch-on command","pointIds":["pt_86tuyzsmsh"],"resourceId":"","parameters":[{"id":"par_nkdq5jjq66","name":"Requested state","value":{"mode":"constant","value":"01"},"unit":""}],"commandId":"cmd_svpo1gw49o"},"measurement":{"description":"Voltage on the power output","pointIds":["pt_vwym5zcf8t","pt_j9ucy4yo0s"],"resourceId":"res_m9vw0woghx","parameters":[],"commandId":"","expected":{"mode":"nominal","min":{"mode":"constant","value":""},"max":{"mode":"constant","value":""},"nominal":{"mode":"variable","variableId":"var_7q2hj4zj0y"},"tolerance":{"mode":"constant","value":"5"},"toleranceType":"percent","unit":"V"}}},{"id":"stp_o3clwtgs1c","description":"Switch the low beam off and check the output falls back to zero.","type":"stimulusMeasurement","wait":{"value":{"mode":"constant","value":""},"unit":"s"},"note":"","calledStageId":"","imageId":"","stimulus":{"description":"Send the switch-off command","pointIds":["pt_86tuyzsmsh"],"resourceId":"","parameters":[{"id":"par_h5bsbmh77b","name":"Requested state","value":{"mode":"constant","value":"00"},"unit":""}],"commandId":"cmd_svpo1gw49o"},"measurement":{"description":"Residual voltage on the output","pointIds":["pt_vwym5zcf8t"],"resourceId":"res_m9vw0woghx","parameters":[],"commandId":"","expected":{"mode":"minmax","comparison":"LT","min":{"mode":"constant","value":""},"max":{"mode":"constant","value":"0.5"},"nominal":{"mode":"constant","value":""},"tolerance":{"mode":"constant","value":""},"toleranceType":"absolute","unit":"V"}}}]}]},{"id":"stg_ol1y66ke3r","name":"Local mechanical command","description":"Press the service button with a controlled force and check it is recognised.","kind":"test","prerequisites":["stg_bqnyctokce"],"exclusions":{"mode":"list","stageIds":["stg_dhbo4fshw2"]},"heldStimuli":[],"tests":[{"id":"tc_c1moxkt4re","name":"Button SW1","purpose":"Check that a button press is recognised by the firmware.","kpi":false,"steps":[{"id":"stp_vi763cawlc","description":"Press the service button with a controlled force.","type":"stimulus","wait":{"value":"300","unit":"ms"},"note":"","calledStageId":"","imageId":"","stimulus":{"description":"Actuate the button","pointIds":["pt_oga8eybpey"],"resourceId":"res_gxkgum5pzh","parameters":[{"id":"par_jr8z9ebv6h","name":"Force","value":{"mode":"constant","value":"5"},"unit":"N"},{"id":"par_uathhghqn6","name":"Duration","value":{"mode":"constant","value":"300"},"unit":"ms"}],"commandId":""}},{"id":"stp_lft7t52vp2","description":"Check that the firmware registered the press.","type":"measurement","wait":{"value":{"mode":"constant","value":""},"unit":"s"},"note":"","calledStageId":"","imageId":"","measurement":{"description":"Button state read over the bus","pointIds":["pt_86tuyzsmsh"],"resourceId":"","parameters":[],"commandId":"cmd_78am7ovihu","expected":{"kind":"boolean","booleanValue":"true","mode":"minmax","comparison":"EQ","min":{"mode":"constant","value":"1"},"max":{"mode":"constant","value":""},"nominal":{"mode":"constant","value":""},"tolerance":{"mode":"constant","value":""},"toleranceType":"absolute","unit":"","text":"","stringComparison":"EQ","caseSensitive":true,"regex":false}}}]}]},{"id":"stg_l4jx1cv1zn","name":"Diagnostics","description":"Read the stored fault codes.","kind":"test","prerequisites":["stg_bqnyctokce"],"exclusions":{"mode":"none","stageIds":[]},"heldStimuli":[],"tests":[{"id":"tc_wqnjofznr6","name":"Fault codes","purpose":"Check that no fault code is stored once the tests are done.","kpi":false,"steps":[{"id":"stp_y6q5l75tfh","description":"Read the stored fault codes.","type":"measurement","wait":{"value":{"mode":"constant","value":""},"unit":"s"},"note":"","calledStageId":"","imageId":"","measurement":{"description":"Number of stored codes","pointIds":["pt_86tuyzsmsh"],"resourceId":"","parameters":[],"commandId":"cmd_c9g7vnwvrc","expected":{"mode":"minmax","comparison":"EQ","min":{"mode":"constant","value":"0"},"max":{"mode":"constant","value":""},"nominal":{"mode":"constant","value":""},"tolerance":{"mode":"constant","value":""},"toleranceType":"absolute","unit":"DTC"}}}]}]},{"id":"stg_7n0uk0jo3b","name":"Test close-out","description":"Remove the stimuli and release the unit.","kind":"test","prerequisites":["stg_dhbo4fshw2","stg_ol1y66ke3r","stg_l4jx1cv1zn"],"exclusions":{"mode":"none","stageIds":[]},"heldStimuli":[],"tests":[{"id":"tc_s1mccuqkuo","name":"Release","purpose":"Power the unit down and free the bench.","kpi":false,"steps":[{"id":"stp_759mnhe3eh","description":"Power the unit down.","type":"stageCall","wait":{"value":{"mode":"constant","value":""},"unit":"s"},"note":"","calledStageId":"stg_1seo8p5e44","imageId":""}]}]},{"id":"stg_r1r2zexq3c","name":"Power up","description":"Bring the unit to its nominal supply voltage and leave it powered.","kind":"setup","prerequisites":[],"exclusions":{"mode":"none","stageIds":[]},"heldStimuli":[{"id":"hs_hyldd3clm8","stepId":"stp_x4xsdig9tz","note":"the unit stays powered for whoever called this stage"}],"tests":[{"id":"tc_8boci05fsf","name":"Supply","purpose":"Apply the supply and let the unit start.","kpi":false,"steps":[{"id":"stp_x4xsdig9tz","description":"Power the unit at the nominal test voltage.","type":"stimulus","wait":{"value":"2","unit":"s"},"note":"","calledStageId":"","imageId":"","stimulus":{"description":"Apply the supply voltage","pointIds":["pt_fgyz6ndwtp","pt_i6tol84qfc"],"resourceId":"res_1z3cuwe6q5","parameters":[{"id":"par_trnoceoc4q","name":"Voltage","value":{"mode":"variable","variableId":"var_7q2hj4zj0y"},"unit":"V"},{"id":"par_ebssib30x3","name":"Current limit","value":{"mode":"constant","value":"5"},"unit":"A"}],"commandId":""}}]}]},{"id":"stg_1seo8p5e44","name":"Power down","description":"Bring the supply back to zero and leave the unit unpowered.","kind":"setup","prerequisites":[],"exclusions":{"mode":"none","stageIds":[]},"heldStimuli":[],"tests":[{"id":"tc_0u9b4wujuj","name":"Supply removal","purpose":"Remove the supply safely.","kpi":false,"steps":[{"id":"stp_3ghngb57bf","description":"Bring the supply voltage down to zero.","type":"stimulus","wait":{"value":{"mode":"constant","value":""},"unit":"s"},"note":"","calledStageId":"","imageId":"","stimulus":{"description":"Set the supply to zero","pointIds":["pt_fgyz6ndwtp","pt_i6tol84qfc"],"resourceId":"res_1z3cuwe6q5","parameters":[{"id":"par_5ebz8x1fkk","name":"Voltage","value":{"mode":"constant","value":"0"},"unit":"V"}],"commandId":""}}]}]}]}</script><!--/TSW:DOC-->
-<!--TSW:HISTORY--><script type="application/json" id="tsw-history">{"revisions":[{"number":"00","date":"2026-05-12","author":"M. Rossi","reason":"First issue","status":"issued","snapshot":{"encoding":"gzip","data":"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"}},{"number":"01","date":"2026-07-03","author":"M. Rossi","reason":"Added the final diagnostics stage","status":"approved","snapshot":{"encoding":"gzip","data":"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"}}]}</script><!--/TSW:HISTORY-->
+<!--TSW:DOC--><script type="application/json" id="tsw-doc">{"schemaVersion":2,"header":{"title":"End of line test specification","company":"Acme Electronics Ltd.","logoAssetId":"demoacmelogo001","project":"P-2451","product":"LCU-200 lighting control unit","documentCode":"SPC-TEST-0042","confidentiality":"Confidential – internal use","disclaimer":"This document contains information owned by Acme Electronics Ltd. It is issued for the sole purpose of testing the LCU-200 and may not be reproduced, disclosed to third parties or used for any other purpose without written authorisation.\n\nThe test limits stated here apply to the production bench described in the appendices. Any deviation must be agreed with the test engineering department before the line is released.","signatories":[{"id":"sig_r2c9n7awuc","role":"Prepared by","name":"M. Rossi"},{"id":"sig_c79mvzaoew","role":"Checked by","name":"A. Bianchi"},{"id":"sig_g6udywxm02","role":"Approved by","name":"L. Verdi"}]},"settings":{"noDirectEditing":false,"chapterOrder":[]},"revision":{"number":"02","date":"2026-08-30","author":"M. Rossi","reason":"Added the 24 V variant","status":"draft"},"description":{"product":"The LCU-200 drives the exterior lighting of the vehicle. It takes its commands from the CAN bus, drives four high current outputs and handles a local service button.\n\nConnector J1 carries supply and bus, connector J2 the power outputs.","testing":"The end of line test covers supply, communication, power outputs and the local mechanical command.\n\nUnless stated otherwise, every measurement is taken at room temperature with a regulated supply."},"references":[{"id":"ref_2zqfqu17ru","title":"LCU-200 hardware specification","code":"SPC-HW-0021","revision":"Rev. 04","notes":""},{"id":"ref_byn89nesmi","title":"Interface Control Document — vehicle CAN bus","code":"ICD-CAN-LCU","revision":"Rev. 12","notes":""},{"id":"ref_r1ndg266ve","title":"End of line testing procedure","code":"PRC-QAL-007","revision":"Rev. 02","notes":""}],"variables":[{"id":"var_k2pejtm9xx","name":"Vbatt","type":"number","unit":"V","value":"13.5","min":"","max":"","allowedValues":[],"description":"Nominal supply voltage used for testing."},{"id":"var_hqj1jbm2b9","name":"IquiescentMax","type":"number","unit":"mA","value":"45","min":"","max":"","allowedValues":[],"description":"Highest current allowed at rest."},{"id":"var_2amanqx027","name":"Protocol","type":"enum","unit":"","value":"CAN","min":"","max":"","allowedValues":["CAN","LIN"],"description":"Bus used to talk to the unit during the test."},{"id":"var_c9g5aqm6k8","name":"AmbientTemp","type":"range","unit":"°C","value":"","min":"15","max":"30","allowedValues":[],"description":"Temperature range allowed in the test area."},{"id":"var_vjwdlwfw7r","name":"DebugMode","type":"boolean","unit":"","value":"false","min":"","max":"","allowedValues":[],"description":"When true, the bench records the full CAN trace."},{"id":"var_tkblfyi1ll","name":"FwPattern","type":"text","unit":"","value":"^LCU200 v\\d+\\.\\d+\\.\\d+$","min":"","max":"","allowedValues":[],"description":"Accepted shape of the firmware version string; changed here when the release family changes."}],"protocols":[{"id":"prt_d2m51evv2g","name":"LCU application frames","family":"Application specific","description":"The frames the LCU-200 defines for its own functions. They are sent on the vehicle CAN bus outside any diagnostic session and are answered immediately.","requestFormat":"Identifier 0x2E0 + 8 data bytes\nByte 0: service (0x2E write, 0x22 read)\nBytes 1-2: parameter identifier, big endian\nBytes 3-7: payload, padded with 0x00","responseFormat":"Identifier 0x2E8 + 8 data bytes\nByte 0: service + 0x40 on success\nBytes 1-2: parameter identifier echoed\nBytes 3-7: value, padded with 0x00","rules":[{"id":"chr_s5ef4u0vlt","name":"Answer within","value":"50","unit":"ms"},{"id":"chr_h9sqzxcd0k","name":"Padding byte","value":"0x00","unit":""},{"id":"chr_lk97g1p8eu","name":"Byte order","value":"big endian","unit":""}],"notes":"No session and no security access: these frames are always available.","referenceId":""},{"id":"prt_rfxmvn1n4i","name":"UDS over ISO-TP","family":"ISO 14229-1 / ISO 15765-2","description":"Diagnostic services, used for the fault memory and the identification data. Requests longer than seven bytes are segmented by ISO-TP.","requestFormat":"Single frame: PCI 0x0n + service + sub-function\nFirst frame: 0x1LLL for a payload longer than 7 bytes, then consecutive frames 0x2n","responseFormat":"Positive: service + 0x40, then the payload\nNegative: 0x7F + service + NRC (0x31 request out of range, 0x22 conditions not correct)","rules":[{"id":"chr_r095a9b0s8","name":"P2 server","value":"50","unit":"ms"},{"id":"chr_ujgqkqz30g","name":"P2* extended","value":"5000","unit":"ms"},{"id":"chr_idwmdi6jwl","name":"Block size","value":"8","unit":"frames"},{"id":"chr_6csqtd1rii","name":"Separation time","value":"10","unit":"ms"}],"notes":"A pending answer (NRC 0x78) restarts the P2* timer: the bench waits, it does not fail the step.","referenceId":""}],"variants":[{"id":"vnt_ddw144an1k","name":"LCU-200 12 V","description":"Base version, 12 V nominal supply.","overlay":[]},{"id":"vnt_f8sflh67wg","name":"LCU-200 24 V","description":"Version for commercial vehicles: 24 V supply and no service button.","overlay":[{"op":"set","path":["variables","#var_k2pejtm9xx","value"],"value":"27"},{"op":"set","path":["variables","#var_hqj1jbm2b9","value"],"value":"30"},{"op":"remove","path":["stages","#stg_yhk04l8sgb"]},{"op":"set","path":["stages","#stg_yhz8nw2a7d","prerequisites"],"value":["stg_j3n8soqhv0","stg_jz1yp10zd9"]},{"op":"set","path":["stages","#stg_j3n8soqhv0","tests","#tc_c8903bcv8t","steps","#stp_g6reea740r","measurement","expected","max"],"value":{"mode":"constant","value":"0.8"}}]}],"resources":[{"id":"res_pf77px8u4q","name":"Programmable DC power supply","category":"Power","characteristics":[{"id":"chr_xwfm4g9nvy","name":"Voltage","value":"0 … 32","unit":"V"},{"id":"chr_1j3qm270wk","name":"Current","value":"0 … 10","unit":"A"},{"id":"chr_2jvc382emk","name":"Current readback","value":"±0.5","unit":"%"}],"notes":"","averageTime":"1.5"},{"id":"res_rcogra9oih","name":"6½ digit multimeter","category":"Electrical measurement","characteristics":[{"id":"chr_9pyu3cev3b","name":"DC voltage","value":"0 … 100","unit":"V"},{"id":"chr_v2iw5rzsed","name":"Accuracy","value":"±0.02","unit":"%"}],"notes":"","averageTime":"0.8"},{"id":"res_51r1bj3ahe","name":"Bench CAN interface","category":"Communication","characteristics":[{"id":"chr_kdvb8l5gfg","name":"Channels","value":"2","unit":""},{"id":"chr_52zl6j1o85","name":"Bit rate","value":"up to 1","unit":"Mbit/s"}],"notes":"","averageTime":"0.3"},{"id":"res_tqki7grjrh","name":"Pneumatic actuator with load cell","category":"Mechanical actuation","characteristics":[{"id":"chr_0cym7au0tu","name":"Force","value":"0 … 50","unit":"N"},{"id":"chr_scql3kvt7f","name":"Stroke","value":"0 … 20","unit":"mm"}],"notes":"","averageTime":"2"}],"interfaces":[{"id":"itf_gnd1l4lien","name":"Vehicle CAN bus","type":"CAN 2.0B","parameters":[{"id":"chr_rq5q27ixvw","name":"Bit rate","value":"500","unit":"kbit/s"},{"id":"chr_5sgx5nlijw","name":"Termination","value":"120","unit":"Ω"},{"id":"chr_tx1rn32yxp","name":"Application protocol","value":"UDS over ISO-TP","unit":""}],"pointIds":["pt_eme81agjp6"],"resourceId":"res_51r1bj3ahe","notes":""},{"id":"itf_t8jkxz8ms5","name":"Service console","type":"UART","parameters":[{"id":"chr_cvj6uctqlj","name":"Baud rate","value":"115200","unit":"bit/s"},{"id":"chr_30c8xdffeg","name":"Frame","value":"8N1","unit":""},{"id":"chr_mlaaimnygt","name":"Levels","value":"3.3","unit":"V"}],"pointIds":["pt_eme81agjp6"],"resourceId":"res_51r1bj3ahe","notes":""}],"commands":[{"id":"cmd_7jop7k3tm1","name":"Read supply voltage","interfaceId":"itf_gnd1l4lien","protocolId":"prt_d2m51evv2g","address":"0x22 0xF1 0x90 (DID VBATT)","requestFormat":"22 F1 90","responseFormat":"62 F1 90 <uint16>","negativeResponse":"7F 22 31 — request out of range","encoding":"uint16, LSB = 10 mV","example":"Response 62 F1 90 05 46 → 13.50 V","notes":"","nominalTime":"0.2","referenceId":"","decoding":{"formula":"","unit":""}},{"id":"cmd_yyo01oc93b","name":"Switch low beam on","interfaceId":"itf_gnd1l4lien","protocolId":"prt_d2m51evv2g","address":"0x2E 0x40 0x01","requestFormat":"2E 40 01 <state>","responseFormat":"6E 40 01","negativeResponse":"7F 2E 22 — conditions not correct (unit not powered)","encoding":"state: 00 = off, 01 = on","example":"2E 40 01 01 → switches on","notes":"","nominalTime":"0.15","referenceId":"","decoding":{"formula":"","unit":""}},{"id":"cmd_xwxy856lw2","name":"Read fault codes","interfaceId":"itf_gnd1l4lien","protocolId":"prt_rfxmvn1n4i","address":"0x19 0x02","requestFormat":"19 02 08","responseFormat":"59 02 <DTC list>","negativeResponse":"","encoding":"3 byte DTC plus status","example":"59 02 FF → no code stored","notes":"","nominalTime":"0.4","referenceId":"","decoding":{"formula":"","unit":""}},{"id":"cmd_4878zrymhx","name":"Read firmware version","interfaceId":"itf_t8jkxz8ms5","protocolId":"","address":"text command \"ver\"","requestFormat":"ver\\r\\n","responseFormat":"LCU200 vX.Y.Z","negativeResponse":"","encoding":"ASCII","example":"LCU200 v1.4.0","notes":"","nominalTime":"0.6","referenceId":"","decoding":{"formula":"","unit":""}}],"points":[{"id":"pt_5okro4g9uy","name":"Battery positive","connector":"J1","pin":"1","signal":"VBAT","contactType":"Ø 2 mm spring probe","characteristics":[{"id":"chr_wbzbaay6ud","name":"Max current","value":"10","unit":"A"},{"id":"chr_492usx2jhd","name":"Contact force","value":"2.5","unit":"N"},{"id":"chr_fjbst450fw","name":"Contact resistance","value":"< 20","unit":"mΩ"}],"markers":[{"id":"mk_oox4dxlari","imageId":"img_cb0dkenxbn","x":0.695,"y":0.19,"area":0.15}],"notes":""},{"id":"pt_gxjbdhivud","name":"Ground","connector":"J1","pin":"2","signal":"GND","contactType":"Ø 2 mm spring probe","characteristics":[{"id":"chr_0r6pxg74w3","name":"Max current","value":"10","unit":"A"},{"id":"chr_u0983ywxfu","name":"Contact force","value":"2.5","unit":"N"}],"markers":[{"id":"mk_2bkihyqgq3","imageId":"img_cb0dkenxbn","x":0.83,"y":0.19,"area":0.3}],"notes":""},{"id":"pt_sjclmmp1fp","name":"Left low beam output","connector":"J2","pin":"5","signal":"OUT_LOW_L","contactType":"Ø 1.5 mm spring probe","characteristics":[{"id":"chr_2fxji3xlrv","name":"Max current","value":"6","unit":"A"},{"id":"chr_mcf739t5x7","name":"Contact force","value":"1.8","unit":"N"}],"markers":[{"id":"mk_o0gmrhb9na","imageId":"img_cb0dkenxbn","x":0.7,"y":0.68,"area":0.3}],"notes":""},{"id":"pt_tyo7m2pdnm","name":"Driver output test pad","connector":"TP12","pin":"—","signal":"DRV_OUT","contactType":"Ø 1 mm spring probe","characteristics":[{"id":"chr_dwae0sizji","name":"Max current","value":"0.1","unit":"A"},{"id":"chr_9d4clzewzj","name":"Contact force","value":"1.2","unit":"N"}],"markers":[{"id":"mk_hgzh23s0zs","imageId":"img_cb0dkenxbn","x":0.487,"y":0.508,"area":0.3}],"notes":""},{"id":"pt_9pc0g2v9yw","name":"Service button SW1","connector":"—","pin":"—","signal":"SW1","contactType":"Ø 6 mm rubber tip","characteristics":[{"id":"chr_kk634h72i5","name":"Pressing force","value":"5 ± 1","unit":"N"},{"id":"chr_jg1i6whw9y","name":"Travel","value":"1.2","unit":"mm"}],"markers":[{"id":"mk_i88hrqrlaa","imageId":"img_cb0dkenxbn","x":0.235,"y":0.7,"area":0.3}],"notes":""},{"id":"pt_eme81agjp6","name":"CAN bus (CANH/CANL)","connector":"J1","pin":"5 / 6","signal":"CANH / CANL","contactType":"Spring probe pair","characteristics":[{"id":"chr_y6a4ffo3gi","name":"Line impedance","value":"120","unit":"Ω"}],"markers":[{"id":"mk_o66wsxxfoo","imageId":"img_cb0dkenxbn","x":0.765,"y":0.255,"area":0.3}],"notes":""}],"images":[{"id":"img_cb0dkenxbn","name":"LCU-200 board — component side","assetId":"demoboardpcb001","caption":"Position of the contact points on the test bench."}],"glossary":[],"stages":[{"id":"stg_pkee895sw2","name":"Set-up and power-up","description":"Connect the board to the bench, power it up and check the quiescent current.","kind":"test","prerequisites":[],"exclusions":{"mode":"none","stageIds":[]},"heldStimuli":[],"tests":[{"id":"tc_svmn779o5d","name":"Supply and current draw","purpose":"Check that the unit powers up and stays within the quiescent current limit.","kpi":true,"steps":[{"id":"stp_fieu3gnqfa","description":"Power the unit up.","type":"stageCall","wait":{"value":{"mode":"constant","value":""},"unit":"s"},"note":"","calledStageId":"stg_iswbftqj1x","imageId":""},{"id":"stp_nu0nsjpuzg","description":"Measure the current drawn at rest.","type":"measurement","wait":{"value":{"mode":"constant","value":""},"unit":"s"},"note":"","calledStageId":"","imageId":"","measurement":{"description":"Supply current","pointIds":["pt_5okro4g9uy"],"resourceId":"res_pf77px8u4q","parameters":[],"commandId":"","expected":{"mode":"minmax","min":{"mode":"constant","value":"0"},"max":{"mode":"variable","variableId":"var_hqj1jbm2b9"},"nominal":{"mode":"constant","value":""},"tolerance":{"mode":"constant","value":""},"toleranceType":"absolute","unit":"mA"}}},{"id":"stp_u4accuonin","description":"Read the firmware version from the service console.","type":"measurement","wait":{"value":{"mode":"constant","value":""},"unit":"s"},"note":"Record the version on the test report.","calledStageId":"","imageId":"","measurement":{"description":"Firmware version","pointIds":[],"resourceId":"","parameters":[],"commandId":"cmd_4878zrymhx","expected":{"kind":"string","text":{"mode":"variable","variableId":"var_tkblfyi1ll"},"regex":true,"caseSensitive":true,"stringComparison":"EQ","mode":"minmax","min":{"mode":"constant","value":""},"max":{"mode":"constant","value":""},"nominal":{"mode":"constant","value":""},"tolerance":{"mode":"constant","value":""},"toleranceType":"absolute","unit":"","booleanValue":"true"}}}]}]},{"id":"stg_j3n8soqhv0","name":"Lighting functions","description":"Drive the power outputs over the bus and check the output voltages.","kind":"test","prerequisites":["stg_pkee895sw2"],"exclusions":{"mode":"none","stageIds":[]},"heldStimuli":[],"tests":[{"id":"tc_c8903bcv8t","name":"Low beam","purpose":"Check that the left low beam output switches on when commanded over CAN.","kpi":true,"steps":[{"id":"stp_iq1t24wugz","description":"Switch the low beam on over the bus and check the output voltage.","type":"stimulusMeasurement","wait":{"value":"200","unit":"ms"},"note":"","calledStageId":"","imageId":"","stimulus":{"description":"Send the switch-on command","pointIds":["pt_eme81agjp6"],"resourceId":"","parameters":[{"id":"par_d43orshpgc","name":"Requested state","value":{"mode":"constant","value":"01"},"unit":""}],"commandId":"cmd_yyo01oc93b"},"measurement":{"description":"Voltage on the power output","pointIds":["pt_sjclmmp1fp","pt_tyo7m2pdnm"],"resourceId":"res_rcogra9oih","parameters":[],"commandId":"","expected":{"mode":"nominal","min":{"mode":"constant","value":""},"max":{"mode":"constant","value":""},"nominal":{"mode":"variable","variableId":"var_k2pejtm9xx"},"tolerance":{"mode":"constant","value":"5"},"toleranceType":"percent","unit":"V"}}},{"id":"stp_g6reea740r","description":"Switch the low beam off and check the output falls back to zero.","type":"stimulusMeasurement","wait":{"value":{"mode":"constant","value":""},"unit":"s"},"note":"","calledStageId":"","imageId":"","stimulus":{"description":"Send the switch-off command","pointIds":["pt_eme81agjp6"],"resourceId":"","parameters":[{"id":"par_fhg167obq4","name":"Requested state","value":{"mode":"constant","value":"00"},"unit":""}],"commandId":"cmd_yyo01oc93b"},"measurement":{"description":"Residual voltage on the output","pointIds":["pt_sjclmmp1fp"],"resourceId":"res_rcogra9oih","parameters":[],"commandId":"","expected":{"mode":"minmax","comparison":"LT","min":{"mode":"constant","value":""},"max":{"mode":"constant","value":"0.5"},"nominal":{"mode":"constant","value":""},"tolerance":{"mode":"constant","value":""},"toleranceType":"absolute","unit":"V"}}}]}]},{"id":"stg_yhk04l8sgb","name":"Local mechanical command","description":"Press the service button with a controlled force and check it is recognised.","kind":"test","prerequisites":["stg_pkee895sw2"],"exclusions":{"mode":"list","stageIds":["stg_j3n8soqhv0"]},"heldStimuli":[],"tests":[{"id":"tc_o68aj9va0t","name":"Button SW1","purpose":"Check that a button press is recognised by the firmware.","kpi":false,"steps":[{"id":"stp_ac2agolwh2","description":"Press the service button with a controlled force.","type":"stimulus","wait":{"value":"300","unit":"ms"},"note":"","calledStageId":"","imageId":"","stimulus":{"description":"Actuate the button","pointIds":["pt_9pc0g2v9yw"],"resourceId":"res_tqki7grjrh","parameters":[{"id":"par_ggya9l6z78","name":"Force","value":{"mode":"constant","value":"5"},"unit":"N"},{"id":"par_bgqynz15ks","name":"Duration","value":{"mode":"constant","value":"300"},"unit":"ms"}],"commandId":""}},{"id":"stp_xhev9r3si4","description":"Check that the firmware registered the press.","type":"measurement","wait":{"value":{"mode":"constant","value":""},"unit":"s"},"note":"","calledStageId":"","imageId":"","measurement":{"description":"Button state read over the bus","pointIds":["pt_eme81agjp6"],"resourceId":"","parameters":[],"commandId":"cmd_7jop7k3tm1","expected":{"kind":"boolean","booleanValue":"true","mode":"minmax","comparison":"EQ","min":{"mode":"constant","value":"1"},"max":{"mode":"constant","value":""},"nominal":{"mode":"constant","value":""},"tolerance":{"mode":"constant","value":""},"toleranceType":"absolute","unit":"","text":"","stringComparison":"EQ","caseSensitive":true,"regex":false}}}]}]},{"id":"stg_jz1yp10zd9","name":"Diagnostics","description":"Read the stored fault codes.","kind":"test","prerequisites":["stg_pkee895sw2"],"exclusions":{"mode":"none","stageIds":[]},"heldStimuli":[],"tests":[{"id":"tc_0ecsclmj2i","name":"Fault codes","purpose":"Check that no fault code is stored once the tests are done.","kpi":false,"steps":[{"id":"stp_eqlt2oaixf","description":"Read the stored fault codes.","type":"measurement","wait":{"value":{"mode":"constant","value":""},"unit":"s"},"note":"","calledStageId":"","imageId":"","measurement":{"description":"Number of stored codes","pointIds":["pt_eme81agjp6"],"resourceId":"","parameters":[],"commandId":"cmd_xwxy856lw2","expected":{"mode":"minmax","comparison":"EQ","min":{"mode":"constant","value":"0"},"max":{"mode":"constant","value":""},"nominal":{"mode":"constant","value":""},"tolerance":{"mode":"constant","value":""},"toleranceType":"absolute","unit":"DTC"}}}]}]},{"id":"stg_yhz8nw2a7d","name":"Test close-out","description":"Remove the stimuli and release the unit.","kind":"test","prerequisites":["stg_j3n8soqhv0","stg_yhk04l8sgb","stg_jz1yp10zd9"],"exclusions":{"mode":"none","stageIds":[]},"heldStimuli":[],"tests":[{"id":"tc_hzwgtkhhev","name":"Release","purpose":"Power the unit down and free the bench.","kpi":false,"steps":[{"id":"stp_uckz5fupdj","description":"Power the unit down.","type":"stageCall","wait":{"value":{"mode":"constant","value":""},"unit":"s"},"note":"","calledStageId":"stg_mfz5usud2g","imageId":""}]}]},{"id":"stg_iswbftqj1x","name":"Power up","description":"Bring the unit to its nominal supply voltage and leave it powered.","kind":"setup","prerequisites":[],"exclusions":{"mode":"none","stageIds":[]},"heldStimuli":[{"id":"hs_6i32dxh6xv","stepId":"stp_ev2y3qrwi7","note":"the unit stays powered for whoever called this stage"}],"tests":[{"id":"tc_ibun5af5lw","name":"Supply","purpose":"Apply the supply and let the unit start.","kpi":false,"steps":[{"id":"stp_ev2y3qrwi7","description":"Power the unit at the nominal test voltage.","type":"stimulus","wait":{"value":"2","unit":"s"},"note":"","calledStageId":"","imageId":"","stimulus":{"description":"Apply the supply voltage","pointIds":["pt_5okro4g9uy","pt_gxjbdhivud"],"resourceId":"res_pf77px8u4q","parameters":[{"id":"par_55esza985n","name":"Voltage","value":{"mode":"variable","variableId":"var_k2pejtm9xx"},"unit":"V"},{"id":"par_xehp9vo9g7","name":"Current limit","value":{"mode":"constant","value":"5"},"unit":"A"}],"commandId":""}}]}]},{"id":"stg_mfz5usud2g","name":"Power down","description":"Bring the supply back to zero and leave the unit unpowered.","kind":"setup","prerequisites":[],"exclusions":{"mode":"none","stageIds":[]},"heldStimuli":[],"tests":[{"id":"tc_r5ecf5dkcj","name":"Supply removal","purpose":"Remove the supply safely.","kpi":false,"steps":[{"id":"stp_iwmlgy7vs6","description":"Bring the supply voltage down to zero.","type":"stimulus","wait":{"value":{"mode":"constant","value":""},"unit":"s"},"note":"","calledStageId":"","imageId":"","stimulus":{"description":"Set the supply to zero","pointIds":["pt_5okro4g9uy","pt_gxjbdhivud"],"resourceId":"res_pf77px8u4q","parameters":[{"id":"par_m084t234i1","name":"Voltage","value":{"mode":"constant","value":"0"},"unit":"V"}],"commandId":""}}]}]}]}</script><!--/TSW:DOC-->
+<!--TSW:HISTORY--><script type="application/json" id="tsw-history">{"revisions":[{"number":"00","date":"2026-05-12","author":"M. Rossi","reason":"First issue","status":"issued","snapshot":{"encoding":"gzip","data":"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"}},{"number":"01","date":"2026-07-03","author":"M. Rossi","reason":"Added the final diagnostics stage","status":"approved","snapshot":{"encoding":"gzip","data":"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"}}]}</script><!--/TSW:HISTORY-->
 <!--TSW:ASSETS--><script type="application/json" id="tsw-assets">{"demoboardpcb001":{"id":"demoboardpcb001","mime":"image/svg+xml","data":"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2NDAiIGhlaWdodD0iNDAwIiB2aWV3Qm94PSIwIDAgNjQwIDQwMCI+CjxyZWN0IHdpZHRoPSI2NDAiIGhlaWdodD0iNDAwIiBmaWxsPSIjMWY2YjNhIi8+CjxyZWN0IHg9IjI0IiB5PSIyNCIgd2lkdGg9IjU5MiIgaGVpZ2h0PSIzNTIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzlmZDhiNCIgc3Ryb2tlLXdpZHRoPSIyIi8+CjxyZWN0IHg9IjYwIiB5PSI3MCIgd2lkdGg9IjE1MCIgaGVpZ2h0PSI4MCIgcng9IjYiIGZpbGw9IiMyNjMxM2IiLz4KPHRleHQgeD0iNzAiIHk9IjExOCIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSIxOCIgZmlsbD0iI2NmZTZkOCI+TUNVPC90ZXh0Pgo8cmVjdCB4PSI0MzAiIHk9IjYwIiB3aWR0aD0iMTMwIiBoZWlnaHQ9IjYwIiByeD0iNCIgZmlsbD0iIzJiMmIyYiIvPgo8dGV4dCB4PSI0NDAiIHk9Ijk2IiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjE2IiBmaWxsPSIjZTBlMGUwIj5KMTwvdGV4dD4KPHJlY3QgeD0iNDMwIiB5PSIyNDAiIHdpZHRoPSIxMzAiIGhlaWdodD0iNjAiIHJ4PSI0IiBmaWxsPSIjMmIyYjJiIi8+Cjx0ZXh0IHg9IjQ0MCIgeT0iMjc2IiBmb250LWZhbWlseT0ibW9ub3NwYWNlIiBmb250LXNpemU9IjE2IiBmaWxsPSIjZTBlMGUwIj5KMjwvdGV4dD4KPGNpcmNsZSBjeD0iMTUwIiBjeT0iMjgwIiByPSIzNCIgZmlsbD0iI2M4Y2NkMCIvPgo8dGV4dCB4PSIxMjQiIHk9IjI4NiIgZm9udC1mYW1pbHk9Im1vbm9zcGFjZSIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzI2MzEzYiI+U1cxPC90ZXh0Pgo8cmVjdCB4PSIyNTAiIHk9IjE4MCIgd2lkdGg9IjEyMCIgaGVpZ2h0PSI0NiIgcng9IjQiIGZpbGw9IiMzYTNhM2EiLz4KPHRleHQgeD0iMjYyIiB5PSIyMDkiIGZvbnQtZmFtaWx5PSJtb25vc3BhY2UiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiNlMGUwZTAiPkRSSVZFUjwvdGV4dD4KPC9zdmc+","width":640,"height":400,"name":"lcu200-board.svg"},"demoacmelogo001":{"id":"demoacmelogo001","mime":"image/svg+xml","data":"PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNjAiIGhlaWdodD0iMTYwIiB2aWV3Qm94PSIwIDAgMjYwIDE2MCI+CjxyZWN0IHdpZHRoPSIyNjAiIGhlaWdodD0iMTYwIiBmaWxsPSIjMTA1NTlhIi8+CjxjaXJjbGUgY3g9IjYwIiBjeT0iNjAiIHI9IjMwIiBmaWxsPSIjZmZmZmZmIi8+CjxwYXRoIGQ9Ik00NSA2MCBMNTcgNzQgTDc4IDQ2IiBmaWxsPSJub25lIiBzdHJva2U9IiMxMDU1OWEiIHN0cm9rZS13aWR0aD0iOCIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+Cjx0ZXh0IHg9IjExMCIgeT0iNzIiIGZvbnQtZmFtaWx5PSJHZW9yZ2lhLCBzZXJpZiIgZm9udC1zaXplPSIzNCIgZmlsbD0iI2ZmZmZmZiI+QUNNRTwvdGV4dD4KPHRleHQgeD0iMjAiIHk9IjEyNiIgZm9udC1mYW1pbHk9Ikdlb3JnaWEsIHNlcmlmIiBmb250LXNpemU9IjIyIiBmaWxsPSIjY2RkZmYyIj5FTEVDVFJPTklDUzwvdGV4dD4KPC9zdmc+","width":260,"height":160,"name":"acme-logo.svg"}}</script><!--/TSW:ASSETS-->
 <script>window.PagedConfig={auto:false};</script>
 <script>/**
@@ -2293,7 +2299,7 @@ body.print-mode #tsw-root { display: none; }
   };
 
   // src/version.js
-  var APP_VERSION = "1.37.1";
+  var APP_VERSION = "1.38.0";
   var APP_NAME = "DEDALO";
   var APP_TAGLINE = "Test Specification Writer";
   var AUTHOR = {
@@ -2331,6 +2337,14 @@ body.print-mode #tsw-root { display: none; }
     }
   };
   var CHANGELOG = [
+    {
+      version: "1.38.0",
+      date: "2026-11-04",
+      changes: [
+        "File \u203A Check for updates asks the project whether a newer build exists. It asks only when you choose it: this file never reaches the network on its own, which is what lets it live on a bench machine with nothing to explain to whoever approved it. When there is a newer build, it is downloaded empty and your document, its revisions and its pictures are written into it: what you get is a new file, saved like any other save, beside the one you were using. The old file is not touched and not replaced \u2014 keep it until you have opened the new one and seen your document in it. Unsaved changes are settled first, or the new file would carry the document as it was at the last save.",
+        "Once a check is three months old the status bar says so, in a word rather than a plate, and the editor says it once when it opens. A file that has never been checked is not reminded of anything: the clock starts at the first check."
+      ]
+    },
     {
       version: "1.37.1",
       date: "2026-11-04",
@@ -2847,15 +2861,17 @@ body.print-mode #tsw-root { display: none; }
     return html.replace(re, () => `<!--TSW:${name}-->${body}<!--/TSW:${name}-->`);
   }
   var escapeHtml = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]);
-  function composeFile({ doc, history, assets }) {
-    if (!SHELL) throw new Error("Shell not captured: the file cannot be rebuilt.");
-    const pruned = pruneAssets(doc, assets, history);
-    let html = SHELL;
+  function composeInto(shell, { doc, history, assets }) {
+    let html = shell;
     html = replaceBlock(html, "DOC", JSON.stringify(doc));
     html = replaceBlock(html, "HISTORY", JSON.stringify(history));
-    html = replaceBlock(html, "ASSETS", JSON.stringify(pruned));
+    html = replaceBlock(html, "ASSETS", JSON.stringify(assets));
     html = html.replace(/<title>[\s\S]*?<\/title>/, () => `<title>${escapeHtml(fileTitle(doc))}</title>`);
     return html;
+  }
+  function composeFile({ doc, history, assets }) {
+    if (!SHELL) throw new Error("Shell not captured: the file cannot be rebuilt.");
+    return composeInto(SHELL, { doc, history, assets: pruneAssets(doc, assets, history) });
   }
   var fileTitle = (doc) => {
     const h2 = doc.header || {};
@@ -11306,17 +11322,17 @@ p { orphans: 2; widows: 2; }
     }
   };
   var docFingerprint = (doc) => fingerprint(doc);
-  var read = (storage, key2) => {
+  var read = (storage2, key2) => {
     try {
-      const raw = storage.getItem(key2);
+      const raw = storage2.getItem(key2);
       return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
     }
   };
-  var write = (storage, key2, value) => {
+  var write = (storage2, key2, value) => {
     try {
-      storage.setItem(key2, JSON.stringify(value));
+      storage2.setItem(key2, JSON.stringify(value));
       return { ok: true };
     } catch (err) {
       return { ok: false, reason: reasonFor(err) };
@@ -11328,63 +11344,63 @@ p { orphans: 2; widows: 2; }
       return "the browser storage is full";
     return err && err.message || "the browser refused to write";
   };
-  function saveDraft(storage, key2, draft) {
-    if (!storage) return { ok: false, reason: "this browser keeps no storage for the file" };
+  function saveDraft(storage2, key2, draft) {
+    if (!storage2) return { ok: false, reason: "this browser keeps no storage for the file" };
     const payload = { v: DRAFT_VERSION, ...draft };
-    const first = write(storage, key2, payload);
+    const first = write(storage2, key2, payload);
     if (first.ok) return { ok: true };
-    if (!pruneDrafts(storage, { except: key2 })) return first;
-    const second = write(storage, key2, payload);
+    if (!pruneDrafts(storage2, { except: key2 })) return first;
+    const second = write(storage2, key2, payload);
     return second.ok ? { ok: true, pruned: true } : second;
   }
-  function saveAssets(storage, key2, assets) {
-    if (!storage) return { ok: false, reason: "this browser keeps no storage for the file" };
-    return write(storage, key2 + ASSETS_SUFFIX, assets || {});
+  function saveAssets(storage2, key2, assets) {
+    if (!storage2) return { ok: false, reason: "this browser keeps no storage for the file" };
+    return write(storage2, key2 + ASSETS_SUFFIX, assets || {});
   }
-  function loadDraft(storage, key2) {
-    if (!storage) return null;
-    const draft = read(storage, key2);
+  function loadDraft(storage2, key2) {
+    if (!storage2) return null;
+    const draft = read(storage2, key2);
     if (!draft || draft.v !== DRAFT_VERSION || !draft.doc) return null;
-    return { ...draft, key: key2, assets: read(storage, key2 + ASSETS_SUFFIX) };
+    return { ...draft, key: key2, assets: read(storage2, key2 + ASSETS_SUFFIX) };
   }
-  function dropDraft(storage, key2) {
-    if (!storage) return;
+  function dropDraft(storage2, key2) {
+    if (!storage2) return;
     try {
-      storage.removeItem(key2);
-      storage.removeItem(key2 + ASSETS_SUFFIX);
+      storage2.removeItem(key2);
+      storage2.removeItem(key2 + ASSETS_SUFFIX);
     } catch {
     }
   }
-  function listDrafts(storage) {
-    if (!storage) return [];
+  function listDrafts(storage2) {
+    if (!storage2) return [];
     const out = [];
     try {
-      for (let i = 0; i < storage.length; i++) {
-        const key2 = storage.key(i);
+      for (let i = 0; i < storage2.length; i++) {
+        const key2 = storage2.key(i);
         if (!key2 || !key2.startsWith(PREFIX) || key2.endsWith(ASSETS_SUFFIX)) continue;
-        const draft = read(storage, key2);
+        const draft = read(storage2, key2);
         if (draft && draft.v === DRAFT_VERSION && draft.doc) out.push({ ...draft, key: key2 });
       }
     } catch {
     }
     return out.sort((a, b) => String(b.at).localeCompare(String(a.at)));
   }
-  function findDraft(storage, doc, place2 = currentPlace()) {
+  function findDraft(storage2, doc, place2 = currentPlace()) {
     const base = docFingerprint(doc);
-    const direct = loadDraft(storage, identityKey(doc, place2));
+    const direct = loadDraft(storage2, identityKey(doc, place2));
     if (direct && (direct.base === base || isNamed(doc))) return direct;
     if (!isNamed(doc)) return null;
-    const match = listDrafts(storage).find((d) => d.base === base);
-    return match ? loadDraft(storage, match.key) : null;
+    const match = listDrafts(storage2).find((d) => d.base === base);
+    return match ? loadDraft(storage2, match.key) : null;
   }
-  function pruneDrafts(storage, { now: now2 = Date.now(), except = "" } = {}) {
-    if (!storage) return 0;
-    const drafts = listDrafts(storage).filter((d) => d.key !== except);
+  function pruneDrafts(storage2, { now: now2 = Date.now(), except = "" } = {}) {
+    if (!storage2) return 0;
+    const drafts = listDrafts(storage2).filter((d) => d.key !== except);
     const stale = (d) => !d.at || now2 - Date.parse(d.at) > MAX_AGE_DAYS * 864e5;
     let dropped = 0;
     drafts.forEach((d, i) => {
       if (stale(d) || i >= MAX_DRAFTS - 1) {
-        dropDraft(storage, d.key);
+        dropDraft(storage2, d.key);
         dropped++;
       }
     });
@@ -11398,30 +11414,30 @@ p { orphans: 2; widows: 2; }
     const h2 = (doc || {}).header || {};
     return PREFIX2 + fingerprint([h2.documentCode || "", h2.title || ""].join("|"));
   };
-  var read2 = (storage, key2) => {
+  var read2 = (storage2, key2) => {
     try {
-      const raw = storage && storage.getItem(key2);
+      const raw = storage2 && storage2.getItem(key2);
       return raw ? JSON.parse(raw) : null;
     } catch {
       return null;
     }
   };
-  var write2 = (storage, key2, value) => {
+  var write2 = (storage2, key2, value) => {
     try {
-      if (!storage) return false;
-      storage.setItem(key2, JSON.stringify(value));
+      if (!storage2) return false;
+      storage2.setItem(key2, JSON.stringify(value));
       return true;
     } catch {
       return false;
     }
   };
-  function readNotes(storage, doc) {
-    const kept = read2(storage, keyOf2(doc));
+  function readNotes(storage2, doc) {
+    const kept = read2(storage2, keyOf2(doc));
     return kept && Array.isArray(kept.notes) ? { notes: kept.notes, changed: kept.changed || "", exported: kept.exported || "" } : { notes: [], changed: "", exported: "" };
   }
-  var writeNotes = (storage, doc, state2) => write2(storage, keyOf2(doc), { notes: state2.notes, changed: state2.changed || "", exported: state2.exported || "" });
-  var readAuthor = (storage) => read2(storage, AUTHOR_KEY) || { name: "", color: "" };
-  var writeAuthor = (storage, author) => write2(storage, AUTHOR_KEY, { name: author.name || "", color: author.color || "" });
+  var writeNotes = (storage2, doc, state2) => write2(storage2, keyOf2(doc), { notes: state2.notes, changed: state2.changed || "", exported: state2.exported || "" });
+  var readAuthor = (storage2) => read2(storage2, AUTHOR_KEY) || { name: "", color: "" };
+  var writeAuthor = (storage2, author) => write2(storage2, AUTHOR_KEY, { name: author.name || "", color: author.color || "" });
 
   // src/ui/notes.js
   var state = {
@@ -12795,8 +12811,8 @@ p { orphans: 2; widows: 2; }
   var SNAPSHOT_INTERVAL = 15e3;
   var net = { on: false, reason: "", at: "", pictures: true };
   var recoveryStatus = () => net;
-  function setupRecovery(store, { storage = safeStorage(), interval = SNAPSHOT_INTERVAL } = {}) {
-    if (!storage) {
+  function setupRecovery(store, { storage: storage2 = safeStorage(), interval = SNAPSHOT_INTERVAL } = {}) {
+    if (!storage2) {
       net.on = false;
       net.reason = "this browser keeps no storage for a file opened this way";
       return { stop() {
@@ -12810,14 +12826,14 @@ p { orphans: 2; widows: 2; }
     let recovering = false;
     net.on = true;
     net.reason = "";
-    const found = findDraft(storage, store.state.doc);
-    pruneDrafts(storage, { except: key2 });
+    const found = findDraft(storage2, store.state.doc);
+    pruneDrafts(storage2, { except: key2 });
     const snapshot = () => {
       if (!net.on || paused || !store.state.dirty || !changed) return;
       const doc = store.state.doc;
       const header = doc.header || {};
       const at = (/* @__PURE__ */ new Date()).toISOString();
-      const written = saveDraft(storage, key2, {
+      const written = saveDraft(storage2, key2, {
         at,
         base,
         title: header.title || "",
@@ -12834,12 +12850,12 @@ p { orphans: 2; widows: 2; }
         return;
       }
       net.at = at;
-      if (store.state.assets !== openedAssets) net.pictures = saveAssets(storage, key2, store.state.assets).ok;
+      if (store.state.assets !== openedAssets) net.pictures = saveAssets(storage2, key2, store.state.assets).ok;
       store.refreshLight();
       changed = false;
     };
     const settle = () => {
-      dropDraft(storage, key2);
+      dropDraft(storage2, key2);
       key2 = identityKey(store.state.doc);
       base = docFingerprint(store.state.doc);
       openedAssets = store.state.assets;
@@ -12873,7 +12889,7 @@ p { orphans: 2; widows: 2; }
     };
     window.addEventListener("beforeunload", onLeave);
     document.addEventListener("visibilitychange", onHide);
-    if (found) askAbout(store, storage, found, { restore: restore2, dismiss: () => {
+    if (found) askAbout(store, storage2, found, { restore: restore2, dismiss: () => {
       paused = false;
     } });
     else paused = false;
@@ -12888,7 +12904,7 @@ p { orphans: 2; widows: 2; }
       found: !!found
     };
   }
-  function askAbout(store, storage, draft, { restore: restore2, dismiss: dismiss2 }) {
+  function askAbout(store, storage2, draft, { restore: restore2, dismiss: dismiss2 }) {
     const stale = draft.base !== docFingerprint(store.state.doc);
     const m = modal({
       title: "Unsaved changes were found from a previous session",
@@ -12921,7 +12937,7 @@ p { orphans: 2; widows: 2; }
           dismiss2();
         }, { title: "Leave the draft where it is and decide later" }),
         button("Discard the draft", () => {
-          dropDraft(storage, draft.key);
+          dropDraft(storage2, draft.key);
           m.close();
           dismiss2();
         }, { class: "btn-danger" }),
@@ -13085,6 +13101,246 @@ p { orphans: 2; widows: 2; }
     }, "\u{1F4CC}");
   }
 
+  // src/io/update.js
+  var UPDATE_URL = "https://raw.githubusercontent.com/HeronForge/Dedalo/main/update.json";
+  var RELEASE_PAGE = "https://github.com/HeronForge/Dedalo";
+  var LAST_CHECK_KEY = "tsw.update.checked";
+  var CHECK_INTERVAL_DAYS = 90;
+  var DAY = 24 * 60 * 60 * 1e3;
+  function compareVersions(a, b) {
+    const parts = (v) => String(v || "").trim().split(".").map((n) => /^\d+$/.test(n) ? Number(n) : -1);
+    const x = parts(a);
+    const y = parts(b);
+    for (let i = 0; i < Math.max(x.length, y.length); i++) {
+      const d = (x[i] ?? 0) - (y[i] ?? 0);
+      if (d) return d < 0 ? -1 : 1;
+    }
+    return 0;
+  }
+  var isNewer = (candidate, current) => compareVersions(candidate, current) > 0;
+  function lastChecked(storage2) {
+    try {
+      const raw = storage2 && storage2.getItem(LAST_CHECK_KEY);
+      const at = raw ? Number(JSON.parse(raw).at) : 0;
+      return at > 0 ? at : null;
+    } catch {
+      return null;
+    }
+  }
+  function rememberCheck(storage2, { at = Date.now(), version = "" } = {}) {
+    try {
+      if (!storage2) return false;
+      storage2.setItem(LAST_CHECK_KEY, JSON.stringify({ at, version }));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  function checkOverdue(storage2, now2 = Date.now()) {
+    const at = lastChecked(storage2);
+    if (!at) return false;
+    return now2 - at >= CHECK_INTERVAL_DAYS * DAY;
+  }
+  function daysSinceCheck(storage2, now2 = Date.now()) {
+    const at = lastChecked(storage2);
+    return at ? Math.floor((now2 - at) / DAY) : null;
+  }
+  function readAnnouncement(value) {
+    if (!value || typeof value !== "object") return null;
+    const version = String(value.version || "").trim();
+    if (!/^\d+(\.\d+)*$/.test(version)) return null;
+    const app = String(value.app || "").trim();
+    return {
+      version,
+      date: String(value.date || "").trim(),
+      changes: Array.isArray(value.changes) ? value.changes.filter((c) => typeof c === "string") : [],
+      // Only from the project's own site: this address is fetched and the answer becomes the
+      // program the reader will open next, so a redirected one is not worth being lenient about.
+      app: /^https:\/\/heronforge\.github\.io\/Dedalo\//.test(app) ? app : ""
+    };
+  }
+  async function fetchAnnouncement(fetchImpl = fetch, url = UPDATE_URL) {
+    try {
+      const res = await fetchImpl(url, { cache: "no-store" });
+      if (!res.ok) return { ok: false, announcement: null, error: `the server answered ${res.status}` };
+      const announcement = readAnnouncement(await res.json());
+      if (!announcement) return { ok: false, announcement: null, error: "the answer was not an update announcement" };
+      return { ok: true, announcement, error: "" };
+    } catch (err) {
+      return { ok: false, announcement: null, error: err && err.message ? err.message : "no answer" };
+    }
+  }
+  async function buildUpdatedFile(state2, announcement, fetchImpl = fetch) {
+    if (!announcement || !announcement.app) throw new Error("The announcement does not say where the build is.");
+    const res = await fetchImpl(announcement.app, { cache: "no-store" });
+    if (!res.ok) throw new Error(`The build could not be downloaded: the server answered ${res.status}.`);
+    const shell = await res.text();
+    if (!/<!--TSW:DOC-->/.test(shell)) throw new Error("What was downloaded is not a DEDALO build: it has no data block.");
+    const pruned = pruneAssets(state2.doc, state2.assets, state2.history);
+    return {
+      html: composeInto(shell, { ...state2, assets: pruned }),
+      name: suggestedFileName(state2.doc).replace(/\.html$/, `_v${announcement.version}.html`)
+    };
+  }
+
+  // src/ui/update.js
+  function storage() {
+    try {
+      return window.localStorage;
+    } catch {
+      return null;
+    }
+  }
+  var updateOverdue = () => checkOverdue(storage());
+  var updateAge = () => daysSinceCheck(storage());
+  var stampLine = () => {
+    const at = lastChecked(storage());
+    if (!at) return "This file has never been checked against the project.";
+    const days = daysSinceCheck(storage());
+    const when = formatDate2(new Date(at).toISOString().slice(0, 10));
+    return days === 0 ? `Last checked today (${when}).` : `Last checked ${days} day${days === 1 ? "" : "s"} ago (${when}).`;
+  };
+  function checkForUpdates(store, { save: save2 } = {}) {
+    const body = h("div", {});
+    const actions2 = h("span", {});
+    const m = modal({ title: "Check for updates", content: body, actions: [actions2] });
+    const show2 = (...nodes) => {
+      body.replaceChildren(...nodes.filter(Boolean));
+    };
+    const act = (...nodes) => {
+      actions2.replaceChildren(...nodes.filter(Boolean));
+    };
+    const offer = () => {
+      show2(
+        h(
+          "p",
+          {},
+          `This file is ${APP_NAME} ${APP_VERSION}. Checking asks the project's page on GitHub `,
+          "which build is the latest one. Nothing is sent: the question is which version exists, and ",
+          "the answer is a version number."
+        ),
+        h("p", { class: "hint" }, stampLine(), " Nothing is ever checked on its own \u2014 only when you ask here.")
+      );
+      act(
+        button("Close", () => m.close()),
+        button("Check now", run2, { class: "btn-primary" })
+      );
+    };
+    const run2 = async () => {
+      show2(h("p", {}, "Asking the project\u2026"));
+      act(button("Close", () => m.close()));
+      const { ok, announcement, error } = await fetchAnnouncement();
+      if (!ok) {
+        show2(
+          h("p", {}, "The project could not be reached: ", h("strong", {}, error), "."),
+          h(
+            "p",
+            { class: "hint" },
+            "A machine with no way out to the internet is the normal case for a test bench. ",
+            "The latest build is always at ",
+            h("a", { href: RELEASE_PAGE, target: "_blank", rel: "noreferrer" }, RELEASE_PAGE),
+            "."
+          )
+        );
+        return;
+      }
+      rememberCheck(storage(), { version: announcement.version });
+      store.refreshLight();
+      if (!isNewer(announcement.version, APP_VERSION)) {
+        show2(
+          h("p", {}, h("strong", {}, `${APP_NAME} ${APP_VERSION}`), " is the latest build."),
+          h("p", { class: "hint" }, "Checked just now; the next reminder is in ", String(CHECK_INTERVAL_DAYS), " days.")
+        );
+        return;
+      }
+      found(announcement);
+    };
+    const found = (announcement) => {
+      const dirty = store.state.dirty;
+      show2(
+        h(
+          "p",
+          {},
+          h("strong", {}, `${APP_NAME} ${announcement.version}`),
+          announcement.date ? ` \xB7 ${formatDate2(announcement.date)}` : "",
+          " is available. This file is ",
+          APP_VERSION,
+          "."
+        ),
+        announcement.changes.length ? h("ul", { class: "update-changes" }, ...announcement.changes.slice(0, 8).map((c) => h("li", {}, c))) : null,
+        h(
+          "p",
+          {},
+          "Updating downloads the new build with this document already inside it, as a new file. ",
+          "The file you are reading is not touched and not replaced: keep it until the new one has opened and ",
+          "you have seen your document in it."
+        ),
+        dirty ? h("p", { class: "hint hint-warning" }, "There are unsaved changes. Save first, or the new file would carry the document as it was at the last save.") : h("p", { class: "hint" }, "The document is saved: the new file will carry exactly what is on screen."),
+        !announcement.app ? h(
+          "p",
+          { class: "hint hint-warning" },
+          "The announcement does not name a build to download. Get it from ",
+          h("a", { href: RELEASE_PAGE, target: "_blank", rel: "noreferrer" }, RELEASE_PAGE),
+          "."
+        ) : null
+      );
+      act(
+        button("Not now", () => m.close()),
+        dirty && save2 ? button("Save first", () => {
+          save2(store);
+          found(announcement);
+        }, { class: "btn-primary" }) : announcement.app ? button(`Download ${APP_NAME} ${announcement.version} with this document`, () => fetchBuild(announcement), { class: "btn-primary" }) : null
+      );
+    };
+    const fetchBuild = async (announcement) => {
+      show2(
+        h("p", {}, `Downloading ${APP_NAME} ${announcement.version} and writing this document into it\u2026`),
+        h("p", { class: "hint" }, "A build is about a megabyte and a half; with pictures the file that comes out is larger.")
+      );
+      act(button("Close", () => m.close()));
+      try {
+        const { html, name } = await buildUpdatedFile(store.state, announcement);
+        const { bytes } = download(html, name, "text/html;charset=utf-8");
+        show2(
+          h("p", {}, h("strong", {}, name), " has been downloaded."),
+          h(
+            "p",
+            {},
+            "Open it and check that the document is all there \u2014 the revisions, the pictures, the variants. ",
+            "Only then is the old file safe to replace with it. Notes live in this browser and follow the specification, ",
+            "not the file, so they are found again by the new one."
+          ),
+          h("p", { class: "hint" }, `${APP_NAME} ${announcement.version} \xB7 ${Math.round(bytes / 1024)} KB`)
+        );
+      } catch (err) {
+        show2(
+          h("p", {}, "The update could not be prepared: ", h("strong", {}, err.message), "."),
+          h(
+            "p",
+            { class: "hint" },
+            "Nothing was changed here. The build can also be downloaded by hand from ",
+            h("a", { href: RELEASE_PAGE, target: "_blank", rel: "noreferrer" }, RELEASE_PAGE),
+            ", and this document carried into it by saving this file and opening it there."
+          )
+        );
+      }
+    };
+    offer();
+  }
+  function updateButton(store, commands) {
+    const days = updateAge();
+    return h("button", {
+      type: "button",
+      class: "status-issues status-update",
+      title: `The last check for a newer build was ${days} days ago. Click to check now \u2014 nothing is ever checked on its own.`,
+      onClick: () => checkForUpdates(store, commands)
+    }, "Updates unchecked");
+  }
+  function remindAboutUpdates() {
+    if (!updateOverdue()) return;
+    toast(`It has been ${updateAge()} days since this file was checked against the project. File \u203A Check for updates asks \u2014 nothing is ever checked on its own.`, "info", 9e3);
+  }
+
   // src/ui/app.js
   var GROUPS = [
     {
@@ -13218,6 +13474,8 @@ p { orphans: 2; widows: 2; }
         issuesButton(store, counts),
         h("span", {}, `Images ${formatBytes(weight)}`),
         notesCount() ? notesButton(store) : null,
+        // A quarter without a check, said once and quietly, where the state of the file is read.
+        updateOverdue() ? updateButton(store, { save }) : null,
         h("span", { class: net2.on ? "muted" : "status-nonet", title: recoveryHint(net2) }, recoveryText(net2))
       ));
       markTitle(store);
@@ -13226,6 +13484,7 @@ p { orphans: 2; widows: 2; }
     store.subscribeLight(drawChrome);
     draw2();
     shortcuts(store, { setNav });
+    remindAboutUpdates();
   }
   function commandBar(store, { setNav }) {
     const doc = store.resolvedDoc();
@@ -13291,8 +13550,14 @@ p { orphans: 2; widows: 2; }
           ["Import data\u2026", () => importJson(store)],
           null,
           ["Export notes (JSON)", () => exportNotes(store), { title: "Download the notes file, named after the specification" }],
-          ["Import notes\u2026", () => importNotes(store), { title: "Read a notes file written on this specification and merge it with yours" }]
-        ], { title: "Open, print, export, import" })
+          ["Import notes\u2026", () => importNotes(store), { title: "Read a notes file written on this specification and merge it with yours" }],
+          null,
+          // The one thing here that reaches the network, and only when it is chosen: see
+          // io/update.js. A file on a bench machine must never ask anything of its own accord.
+          ["Check for updates\u2026", () => checkForUpdates(store, { save }), {
+            title: "Ask the project whether a newer build exists. Nothing is ever checked on its own."
+          }]
+        ], { title: "Open, print, export, import, update" })
       ),
       store.activeVariant() ? h(
         "div",
