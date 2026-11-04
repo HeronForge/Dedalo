@@ -7,7 +7,7 @@
 // They move independently: a new build that changes nothing about the data leaves the other
 // two alone, and a file written by an older build must keep opening here.
 
-export const APP_VERSION = '1.37.0';
+export const APP_VERSION = '1.37.1';
 
 // The project's name; what it does is the tagline, so the two are never read as one title.
 export const APP_NAME = 'DEDALO';
@@ -61,6 +61,13 @@ export const FORMATS = {
  * the tool rather than for whoever wrote it.
  */
 export const CHANGELOG = [
+  {
+    version: '1.37.1',
+    date: '2026-11-04',
+    changes: [
+      'The protocols section opens again. It came up empty from the moment a protocol was given the external reference that defines it: the list of references it had to offer was asked for before it was read, and the section stopped drawing where it stood, before the first protocol.',
+    ],
+  },
   {
     version: '1.37.0',
     date: '2026-09-13',

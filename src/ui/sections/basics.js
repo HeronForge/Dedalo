@@ -242,6 +242,8 @@ export function resourcesSection(store) {
  * short; the reader who has to build the frame reads it here.
  */
 export function protocolsSection(store) {
+  const doc = store.resolvedDoc();
+  const codes = store.codes();
   const intro = h('p', { class: 'hint' },
     'A bus carries more than one grammar — application frames and UDS on the same CAN line — ',
     'and a command that does not say which one it speaks cannot be built. Describe each of ',
