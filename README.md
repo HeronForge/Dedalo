@@ -167,6 +167,15 @@ upload them afterwards and place the markers.
 The same guide doubles as the conceptual documentation of DEDALO, and the import also accepts a
 previous **Export data** file, so the JSON is a round-trip format.
 
+## Updating
+
+The build is the file, so there is nothing to install and nothing to update in place.
+**File ▾ → Check for updates…** asks the project whether a newer build exists — only when you
+ask it: the file never reaches the network on its own. When there is one, it is downloaded
+empty and your document, its revisions and its pictures are written into it; what you get is a
+new file beside the one you were using, which is left untouched until you have opened the new
+one and checked it. After three months without a check the status bar says so, quietly.
+
 ## Revisions
 
 You work on a draft. **Validate** (the ✔ in the command bar) freezes an immutable snapshot

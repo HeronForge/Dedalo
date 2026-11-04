@@ -644,6 +644,29 @@ copy is offered only to the file it came from — by its place, its code and its
 document that has no code or title yet, by its content as well — so on a shared machine nobody
 is offered somebody else's unsaved work.
 
+### Moving to a newer build
+
+The build is the file: there is nothing installed anywhere, so «updating» means getting the new
+build and carrying this document into it. **File ▾ → Check for updates…** asks the project
+whether a newer one exists. It asks only when you choose it — the file never reaches the
+network on its own, which is what lets it sit on a bench machine with nothing to justify — and
+the only thing kept is the date of the last check.
+
+When there is a newer build, the dialog says what it brings and offers to download it with this
+document already inside it. What comes out is a **new file**, saved the way every save is: the
+file you are reading is not touched and not replaced. Keep it until you have opened the new one
+and seen your document in it — the revisions, the pictures, the variants. Unsaved changes are
+settled first: the new file carries what was saved, not what is on screen, so the dialog asks
+you to save before it goes on. Your notes live in this browser and belong to the specification
+rather than to the file, so the new one finds them again.
+
+Once a check is three months old the status bar says *Updates unchecked*, in a word rather than
+a plate, and the editor says it once when it opens. A file that has never been checked is
+reminded of nothing: the clock starts at the first check. A machine with no way out to the
+internet is the ordinary case for a test bench — the dialog says so plainly and points at
+`github.com/HeronForge/Dedalo`, where the build can be fetched by hand and this document
+carried into it by saving here and opening there.
+
 Two more versions live in the file, and **Version and changelog** shows all of them:
 
 - the **build** of the editor that wrote it;

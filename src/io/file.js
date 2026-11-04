@@ -70,16 +70,24 @@ function replaceBlock(html, name, json) {
 
 const escapeHtml = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 
+/**
+ * The data written into a build of the program. Usually that build is this one — the shell
+ * captured at startup, which is what a save rebuilds — but the update downloads a newer build
+ * and writes the same three blocks into it, which is the whole of what «updating» means here.
+ */
+export function composeInto(shell, { doc, history, assets }) {
+  let html = shell;
+  html = replaceBlock(html, 'DOC', JSON.stringify(doc));
+  html = replaceBlock(html, 'HISTORY', JSON.stringify(history));
+  html = replaceBlock(html, 'ASSETS', JSON.stringify(assets));
+  html = html.replace(/<title>[\s\S]*?<\/title>/, () => `<title>${escapeHtml(fileTitle(doc))}</title>`);
+  return html;
+}
+
 /** Rebuilds the complete file with the current data. */
 export function composeFile({ doc, history, assets }) {
   if (!SHELL) throw new Error('Shell not captured: the file cannot be rebuilt.');
-  const pruned = pruneAssets(doc, assets, history);
-  let html = SHELL;
-  html = replaceBlock(html, 'DOC', JSON.stringify(doc));
-  html = replaceBlock(html, 'HISTORY', JSON.stringify(history));
-  html = replaceBlock(html, 'ASSETS', JSON.stringify(pruned));
-  html = html.replace(/<title>[\s\S]*?<\/title>/, () => `<title>${escapeHtml(fileTitle(doc))}</title>`);
-  return html;
+  return composeInto(SHELL, { doc, history, assets: pruneAssets(doc, assets, history) });
 }
 
 const fileTitle = (doc) => {

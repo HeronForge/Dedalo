@@ -7,7 +7,7 @@
 // They move independently: a new build that changes nothing about the data leaves the other
 // two alone, and a file written by an older build must keep opening here.
 
-export const APP_VERSION = '1.37.1';
+export const APP_VERSION = '1.38.0';
 
 // The project's name; what it does is the tagline, so the two are never read as one title.
 export const APP_NAME = 'DEDALO';
@@ -61,6 +61,14 @@ export const FORMATS = {
  * the tool rather than for whoever wrote it.
  */
 export const CHANGELOG = [
+  {
+    version: '1.38.0',
+    date: '2026-11-04',
+    changes: [
+      'File › Check for updates asks the project whether a newer build exists. It asks only when you choose it: this file never reaches the network on its own, which is what lets it live on a bench machine with nothing to explain to whoever approved it. When there is a newer build, it is downloaded empty and your document, its revisions and its pictures are written into it: what you get is a new file, saved like any other save, beside the one you were using. The old file is not touched and not replaced — keep it until you have opened the new one and seen your document in it. Unsaved changes are settled first, or the new file would carry the document as it was at the last save.',
+      'Once a check is three months old the status bar says so, in a word rather than a plate, and the editor says it once when it opens. A file that has never been checked is not reminded of anything: the clock starts at the first check.',
+    ],
+  },
   {
     version: '1.37.1',
     date: '2026-11-04',

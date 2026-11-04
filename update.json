@@ -1,0 +1,10 @@
+{
+  "version": "1.38.0",
+  "date": "2026-11-04",
+  "changes": [
+    "File › Check for updates asks the project whether a newer build exists. It asks only when you choose it: this file never reaches the network on its own, which is what lets it live on a bench machine with nothing to explain to whoever approved it. When there is a newer build, it is downloaded empty and your document, its revisions and its pictures are written into it: what you get is a new file, saved like any other save, beside the one you were using. The old file is not touched and not replaced — keep it until you have opened the new one and seen your document in it. Unsaved changes are settled first, or the new file would carry the document as it was at the last save.",
+    "Once a check is three months old the status bar says so, in a word rather than a plate, and the editor says it once when it opens. A file that has never been checked is not reminded of anything: the clock starts at the first check."
+  ],
+  "app": "https://heronforge.github.io/Dedalo/test-spec.html",
+  "page": "https://github.com/HeronForge/Dedalo"
+}

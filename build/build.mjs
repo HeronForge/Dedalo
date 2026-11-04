@@ -101,6 +101,18 @@ async function main() {
   await copyFile(p('docs', 'example-spec.json'), p('dist', 'example-spec.json'));
   await copyFile(p('LICENSE'), p('dist', 'LICENSE'));
 
+  // What «File › Check for updates» reads. Written by the build, never by hand, so the number
+  // the project announces and the number inside the build can never tell two different stories.
+  const { APP_VERSION, CHANGELOG } = await import(new URL('../src/version.js', import.meta.url));
+  const latest = CHANGELOG[0] || { date: '', changes: [] };
+  await writeFile(p('update.json'), JSON.stringify({
+    version: APP_VERSION,
+    date: latest.date || '',
+    changes: (latest.changes || []).slice(0, 8),
+    app: 'https://heronforge.github.io/Dedalo/test-spec.html',
+    page: 'https://github.com/HeronForge/Dedalo',
+  }, null, 2), 'utf8');
+
   const kb = (s) => (Buffer.byteLength(s, 'utf8') / 1024).toFixed(0) + ' KB';
   console.log(`dist/test-spec.html  ${kb(empty)}`);
   console.log(`dist/example.html     ${kb(demoHtml)}`);

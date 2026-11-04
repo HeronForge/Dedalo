@@ -20,6 +20,7 @@ import { breadcrumb } from './breadcrumb.js';
 import { recoveryStatus, clockOf } from './autosave.js';
 import { onDocumentPosition } from './docspy.js';
 import { sideRail } from './rail.js';
+import { checkForUpdates, updateButton, updateOverdue, remindAboutUpdates } from './update.js';
 import { captureViewpoint, restoreViewpoint, takePinnedViewpoint } from './viewpoint.js';
 import { exportNotes, importNotes, notesNeedExport, notesCount, notesStatus, notesOverview, adoptNotes } from './notes.js';
 
@@ -169,6 +170,8 @@ export function mountApp(store, root) {
       issuesButton(store, counts),
       h('span', {}, `Images ${formatBytes(weight)}`),
       notesCount() ? notesButton(store) : null,
+      // A quarter without a check, said once and quietly, where the state of the file is read.
+      updateOverdue() ? updateButton(store, { save }) : null,
       h('span', { class: net.on ? 'muted' : 'status-nonet', title: recoveryHint(net) }, recoveryText(net))));
     markTitle(store);
   };
@@ -177,6 +180,7 @@ export function mountApp(store, root) {
   store.subscribeLight(drawChrome);
   draw();
   shortcuts(store, { setNav });
+  remindAboutUpdates();
 }
 
 function commandBar(store, { setNav }) {
@@ -227,7 +231,13 @@ function commandBar(store, { setNav }) {
         null,
         ['Export notes (JSON)', () => exportNotes(store), { title: 'Download the notes file, named after the specification' }],
         ['Import notes…', () => importNotes(store), { title: 'Read a notes file written on this specification and merge it with yours' }],
-      ], { title: 'Open, print, export, import' })),
+        null,
+        // The one thing here that reaches the network, and only when it is chosen: see
+        // io/update.js. A file on a bench machine must never ask anything of its own accord.
+        ['Check for updates…', () => checkForUpdates(store, { save }), {
+          title: 'Ask the project whether a newer build exists. Nothing is ever checked on its own.',
+        }],
+      ], { title: 'Open, print, export, import, update' })),
     store.activeVariant()
       ? h('div', { class: 'variant-banner' },
           `Active variant: ${store.activeVariant().name || '(unnamed)'} — every change is recorded as a customisation of this variant.`,

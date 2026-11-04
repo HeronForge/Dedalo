@@ -343,6 +343,21 @@ Rebuild and republish `gh-pages` whenever the canvas or the app changes:
    existing branch instead, so `gh-pages` keeps its own history rather than being replaced each
    time.
 
+## Updating a build in the field
+
+`File › Check for updates` (`src/io/update.js`, `src/ui/update.js`) is the one thing in the
+app that touches the network, and only when the reader chooses it — never on its own, because
+the file is meant to live on a bench machine where an unexplained outbound request is a reason
+to ban the tool. It reads `update.json` at the root of `main`, over
+`raw.githubusercontent.com`, which **the build writes** from `APP_VERSION` and `CHANGELOG[0]`:
+never edit it by hand, and commit it with the version bump or the published number will lag
+behind the published build. The build it offers to download is `test-spec.html` on `gh-pages`
+— the empty one — into which the current document, history and assets are written
+(`composeInto` in `io/file.js`), producing a new file the reader saves beside the old one.
+Publishing a release therefore means pushing `update.json` on `main` **and** the rebuilt files
+on `gh-pages` in the same session: an announcement whose build is not published yet points at
+the previous version.
+
 ## Writing style
 
 The prose here is part of the product. The changelog is shown in the editor and is written for

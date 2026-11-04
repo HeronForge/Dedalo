@@ -399,6 +399,12 @@ textarea.inp { resize: vertical; }
 .status-issues-warning { background: #fdf0d5; color: #7a4a12; font-weight: 600; }
 .status-issues-warning:hover { background: #f6e3bf; }
 .status-issues-ok { color: #1d6b32; }
+/* Three months without a check for a newer build: a word, not a plate. Nothing is wrong with
+   the document, and a warning that looks like an error teaches people to ignore both. */
+.status-update { color: #62707e; text-decoration: underline dotted; text-underline-offset: 2px; }
+.status-update:hover { color: #10559a; }
+/* What the newer build brings, in the dialog that offers it. */
+.update-changes { margin: 10px 0; padding-left: 20px; display: flex; flex-direction: column; gap: 5px; color: #35424f; }
 
 /* ---- version and changelog ---- */
 .release { border-top: 1px solid #eef1f5; padding: 8px 0; }
