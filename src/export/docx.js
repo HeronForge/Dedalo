@@ -22,7 +22,7 @@ import { sortedGlossary } from '../model/glossary.js';
 import { revisionMatrix, cellText } from '../history/matrix.js';
 import { lastIssuedDocument } from '../history/revisions.js';
 import { DEDALO_LOGO_PNG, DEDALO_LOGO_PNG_SIZE, DEDALO_MARK_PNG, DEDALO_MARK_PNG_SIZE } from '../brand/dedalo.js';
-import { APP_NAME, APP_TAGLINE } from '../version.js';
+import { APP_NAME, APP_TAGLINE, APP_URL, APP_URL_TEXT } from '../version.js';
 
 // ---- page geometry (twips: 1/20 pt) ------------------------------------------
 
@@ -65,6 +65,7 @@ function run(text, props = {}) {
     props.caps ? '<w:smallCaps/>' : '',
     props.color ? `<w:color w:val="${props.color}"/>` : '',
     props.size ? `<w:sz w:val="${props.size}"/>` : '',
+    props.underline ? '<w:u w:val="single"/>' : '',
     props.highlight ? `<w:shd w:val="clear" w:color="auto" w:fill="${props.highlight}"/>` : '',
   ].join('');
   // A line break and a tab are elements of their own in a run: inside <w:t> the first is
@@ -74,6 +75,14 @@ function run(text, props = {}) {
     .join('');
   return xml(`<w:r>${rPr ? `<w:rPr>${rPr}</w:rPr>` : ''}${body}</w:r>`);
 }
+
+/**
+ * A run Word follows when it is clicked. The address is not in the run: it is in a
+ * relationship of the document part, which the caller registers and names here — writing the
+ * URL into the body instead produces a document Word opens and silently strips the link from.
+ */
+const linkRun = (relationId, text, props = {}) =>
+  xml(`<w:hyperlink r:id="${relationId}">${run(text, { color: '5B6672', underline: true, ...props })}</w:hyperlink>`);
 
 function para(content, props = {}) {
   const runs = Array.isArray(content) ? content.join('')
@@ -214,6 +223,12 @@ export async function buildDocx({ doc, base = null, history = { revisions: [] },
   if (logo_) {
     body.push(para('Powered by', { size: 15, color: '7A8592', caps: true, align: 'center', spacingBefore: 360, spacingAfter: 60 }));
     body.push(para([pictureRun(logo_.id, logo_.index, APP_NAME, logo_.width, logo_.height, 160, 130)], { align: 'center' }));
+    // Where to find the tool, under its mark: whoever is handed the Word file has no other
+    // way of knowing what wrote it. Clickable there, and written out so it can be typed off
+    // a printed page.
+    const link = `rId${relations.length + 1}`;
+    relations.push({ id: link, type: 'hyperlink', target: APP_URL, external: true });
+    body.push(para([String(linkRun(link, APP_URL_TEXT, { size: 15 }))], { align: 'center', spacingBefore: 60 }));
   }
   const lastFrozen = lastIssuedDocument(history);
   const printed = printedChapters(doc, history, lastFrozen);
@@ -1025,11 +1040,14 @@ const REL_TYPE = {
   header: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/header',
   footer: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer',
   image: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image',
+  hyperlink: 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink',
 };
 
 const documentRels = (relations) => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
   + '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
-  + relations.map((r) => `<Relationship Id="${r.id}" Type="${REL_TYPE[r.type]}" Target="${esc(r.target)}"/>`).join('')
+  // An address outside the package has to say so: without TargetMode Word reads it as a path
+  // to a part of the file, finds nothing, and declares the document unreadable.
+  + relations.map((r) => `<Relationship Id="${r.id}" Type="${REL_TYPE[r.type]}" Target="${esc(r.target)}"${r.external ? ' TargetMode="External"' : ''}/>`).join('')
   + '</Relationships>';
 
 // The document properties have a fixed element order too — category, created, creator,

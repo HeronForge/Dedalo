@@ -6,7 +6,9 @@ they are the ones people get wrong.
 
 DEDALO opens on the **document**: that is the specification as it will be printed. Every
 printed page carries its mark at the right end of the header, and the cover ends with
-«Powered by DEDALO», small, in the corner a colophon takes. The
+«Powered by DEDALO» and the address of the project under it, small, in the corner a colophon
+takes — a working link in the PDF and in the Word file, written out in full so that whoever
+holds the sheet on paper can read it off and type it. The
 **☰ Sections** button at the top left opens the panel you write from; the 📌 inside it keeps the
 panel open while you work. In the command bar, **💾** saves (`Ctrl+S`), **✔** validates the
 draft, ↶ ↷ undo and redo, and everything that is not written by hand — opening, printing,

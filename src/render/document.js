@@ -19,7 +19,7 @@ import { printedChapters } from '../model/chapters.js';
 import { sortedGlossary } from '../model/glossary.js';
 import { revisionMatrix, cellText } from '../history/matrix.js';
 import { DEDALO_LOGO, DEDALO_MARK } from '../brand/dedalo.js';
-import { APP_NAME } from '../version.js';
+import { APP_NAME, APP_URL, APP_URL_TEXT } from '../version.js';
 import { lastIssuedDocument } from '../history/revisions.js';
 
 /**
@@ -184,7 +184,13 @@ function cover(doc, assets, variant) {
     hd.disclaimer ? h('div', { class: 'cover-disclaimer' }, paragraphs(hd.disclaimer)) : null,
     // The tool's logo closes the cover, centred and large enough to be read as a logo, under
     // the two words that say what it is doing there.
-    h('div', { class: 'cover-mark' }, h('div', { class: 'cover-mark-label' }, 'Powered by'), h('img', { src: DEDALO_LOGO, alt: APP_NAME })));
+    h('div', { class: 'cover-mark' },
+      h('div', { class: 'cover-mark-label' }, 'Powered by'),
+      h('img', { src: DEDALO_LOGO, alt: APP_NAME }),
+      // A real anchor, not a line of text that looks like one: the browser's own print turns
+      // it into a link annotation in the PDF, so the address is both clickable there and
+      // readable on paper.
+      h('a', { class: 'cover-mark-link', href: APP_URL, target: '_blank', rel: 'noreferrer' }, APP_URL_TEXT)));
 }
 
 /**

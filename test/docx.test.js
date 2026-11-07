@@ -220,6 +220,21 @@ test('a picture becomes a media part with its own relationship and drawing', asy
   assert.match(text(parts.get('word/_rels/header1.xml.rels')), /media\/dedalo-mark\.png/);
   assert.match(text(parts.get('word/header1.xml')), /<a:blip r:embed="rId2"\/>/);
   assert.match(document, /Powered by<\/w:t>[\s\S]{0,400}name="DEDALO"/);
+
+  // Under the mark, the address of the project, as a link Word follows: the relationship
+  // carries the URL and says it points outside the package, the body carries only its id.
+  const rels = text(parts.get('word/_rels/document.xml.rels'));
+  const link = document.match(/<w:hyperlink r:id="(rId\d+)">/);
+  assert.ok(link, 'the cover carries a hyperlink');
+  assert.match(document, /heronforge\.github\.io\/Dedalo<\/w:t>/);
+  const declaration = new RegExp(`<Relationship Id="${link[1]}"[^>]*Target="https://heronforge\.github\.io/Dedalo/"[^>]*TargetMode="External"`);
+  assert.match(rels, declaration, 'the address is declared as external, or Word calls the file unreadable');
+  // Nothing else was knocked off its own relationship by the one inserted in the middle.
+  const ids = [...rels.matchAll(/Id="(rId\d+)"/g)].map((m) => m[1]);
+  assert.equal(new Set(ids).size, ids.length, 'no two relationships share an id');
+  for (const embedded of [...document.matchAll(/r:embed="(rId\d+)"/g)].map((m) => m[1])) {
+    assert.match(rels, new RegExp(`Id="${embedded}"[^>]*relationships/image`), `${embedded} is a picture`);
+  }
 });
 
 test('the disclaimer reaches the cover of the Word file, and only when there is one', async () => {

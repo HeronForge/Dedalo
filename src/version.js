@@ -7,11 +7,19 @@
 // They move independently: a new build that changes nothing about the data leaves the other
 // two alone, and a file written by an older build must keep opening here.
 
-export const APP_VERSION = '1.38.0';
+export const APP_VERSION = '1.39.0';
 
 // The project's name; what it does is the tagline, so the two are never read as one title.
 export const APP_NAME = 'DEDALO';
 export const APP_TAGLINE = 'Test Specification Writer';
+
+// Where the project lives, printed under the mark on the cover. Whoever is handed the
+// specification on paper or as a PDF — a supplier, a customer's quality department — has no
+// other way of finding out what wrote it or of getting a copy of their own, so the address
+// is written out in full rather than hidden behind a word: a link one can read off paper
+// and type is worth more than one that only works when clicked.
+export const APP_URL = 'https://heronforge.github.io/Dedalo/';
+export const APP_URL_TEXT = 'heronforge.github.io/Dedalo';
 
 /** Who wrote this and under what terms. The full text lives in LICENSE, next to the file. */
 export const AUTHOR = {
@@ -61,6 +69,13 @@ export const FORMATS = {
  * the tool rather than for whoever wrote it.
  */
 export const CHANGELOG = [
+  {
+    version: '1.39.0',
+    date: '2026-11-07',
+    changes: [
+      'The cover carries the address of the project under the mark that closes it. Whoever is handed the specification — on paper, as a PDF, as a Word file — can see what wrote it and get a copy of their own: the address is a working link in the PDF and in the Word file, and it is written out in full so that it can also be read off a printed page and typed.',
+    ],
+  },
   {
     version: '1.38.0',
     date: '2026-11-04',

@@ -63,6 +63,12 @@
 .cover-mark { margin-top: 10mm; text-align: center; }
 .cover-mark-label { font-family: var(--doc-sans); font-size: 7.5pt; color: #7a8592; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 1.5mm; }
 .cover-mark img { width: 42mm; display: block; margin: 0 auto; }
+/* The address under the mark: grey enough to stay a colophon, underlined so that it reads as
+   something to follow, printed in full so that it can be typed from a sheet of paper. */
+.cover-mark-link {
+  display: inline-block; margin-top: 1.5mm; font-family: var(--doc-sans); font-size: 7.5pt;
+  color: #5b6672; text-decoration: underline; text-underline-offset: 1.5px;
+}
 .cover-signatures .signature-row td { height: 15mm; vertical-align: bottom; color: #7a8592; font-size: 8pt; }
 
 /* ---- headings ---- */
