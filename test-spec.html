@@ -775,6 +775,12 @@ textarea.inp { resize: vertical; }
 .cover-mark { margin-top: 10mm; text-align: center; }
 .cover-mark-label { font-family: var(--doc-sans); font-size: 7.5pt; color: #7a8592; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 1.5mm; }
 .cover-mark img { width: 42mm; display: block; margin: 0 auto; }
+/* The address under the mark: grey enough to stay a colophon, underlined so that it reads as
+   something to follow, printed in full so that it can be typed from a sheet of paper. */
+.cover-mark-link {
+  display: inline-block; margin-top: 1.5mm; font-family: var(--doc-sans); font-size: 7.5pt;
+  color: #5b6672; text-decoration: underline; text-underline-offset: 1.5px;
+}
 .cover-signatures .signature-row td { height: 15mm; vertical-align: bottom; color: #7a8592; font-size: 8pt; }
 
 /* ---- headings ---- */
@@ -2299,9 +2305,11 @@ body.print-mode #tsw-root { display: none; }
   };
 
   // src/version.js
-  var APP_VERSION = "1.38.0";
+  var APP_VERSION = "1.39.0";
   var APP_NAME = "DEDALO";
   var APP_TAGLINE = "Test Specification Writer";
+  var APP_URL = "https://heronforge.github.io/Dedalo/";
+  var APP_URL_TEXT = "heronforge.github.io/Dedalo";
   var AUTHOR = {
     name: "D. Tracchi",
     assistedBy: "Claude (Anthropic)"
@@ -2337,6 +2345,13 @@ body.print-mode #tsw-root { display: none; }
     }
   };
   var CHANGELOG = [
+    {
+      version: "1.39.0",
+      date: "2026-11-07",
+      changes: [
+        "The cover carries the address of the project under the mark that closes it. Whoever is handed the specification \u2014 on paper, as a PDF, as a Word file \u2014 can see what wrote it and get a copy of their own: the address is a working link in the PDF and in the Word file, and it is written out in full so that it can also be read off a printed page and typed."
+      ]
+    },
     {
       version: "1.38.0",
       date: "2026-11-04",
@@ -4559,11 +4574,13 @@ body.print-mode #tsw-root { display: none; }
       props.caps ? "<w:smallCaps/>" : "",
       props.color ? `<w:color w:val="${props.color}"/>` : "",
       props.size ? `<w:sz w:val="${props.size}"/>` : "",
+      props.underline ? '<w:u w:val="single"/>' : "",
       props.highlight ? `<w:shd w:val="clear" w:color="auto" w:fill="${props.highlight}"/>` : ""
     ].join("");
     const body = String(text ?? "").split("\n").map((line, i) => (i ? "<w:br/>" : "") + line.split("	").map((piece) => `<w:t xml:space="preserve">${esc(piece)}</w:t>`).join("<w:tab/>")).join("");
     return xml(`<w:r>${rPr ? `<w:rPr>${rPr}</w:rPr>` : ""}${body}</w:r>`);
   }
+  var linkRun = (relationId, text, props = {}) => xml(`<w:hyperlink r:id="${relationId}">${run(text, { color: "5B6672", underline: true, ...props })}</w:hyperlink>`);
   function para(content, props = {}) {
     const runs = Array.isArray(content) ? content.join("") : isXml(content) ? String(content) : String(run(content, props));
     const pPr = [
@@ -4642,6 +4659,9 @@ body.print-mode #tsw-root { display: none; }
     if (logo_) {
       body.push(para("Powered by", { size: 15, color: "7A8592", caps: true, align: "center", spacingBefore: 360, spacingAfter: 60 }));
       body.push(para([pictureRun(logo_.id, logo_.index, APP_NAME, logo_.width, logo_.height, 160, 130)], { align: "center" }));
+      const link2 = `rId${relations.length + 1}`;
+      relations.push({ id: link2, type: "hyperlink", target: APP_URL, external: true });
+      body.push(para([String(linkRun(link2, APP_URL_TEXT, { size: 15 }))], { align: "center", spacingBefore: 60 }));
     }
     const lastFrozen = lastIssuedDocument(history);
     const printed = printedChapters(doc, history, lastFrozen);
@@ -5262,9 +5282,10 @@ body.print-mode #tsw-root { display: none; }
     styles: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles",
     header: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/header",
     footer: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer",
-    image: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image"
+    image: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/image",
+    hyperlink: "http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink"
   };
-  var documentRels = (relations) => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + relations.map((r) => `<Relationship Id="${r.id}" Type="${REL_TYPE[r.type]}" Target="${esc(r.target)}"/>`).join("") + "</Relationships>";
+  var documentRels = (relations) => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' + relations.map((r) => `<Relationship Id="${r.id}" Type="${REL_TYPE[r.type]}" Target="${esc(r.target)}"${r.external ? ' TargetMode="External"' : ""}/>`).join("") + "</Relationships>";
   var coreProperties = (doc) => {
     const hd = doc.header || {};
     const rev = doc.revision || {};
@@ -8660,7 +8681,16 @@ body.print-mode #tsw-root { display: none; }
       hd.disclaimer ? h("div", { class: "cover-disclaimer" }, paragraphs2(hd.disclaimer)) : null,
       // The tool's logo closes the cover, centred and large enough to be read as a logo, under
       // the two words that say what it is doing there.
-      h("div", { class: "cover-mark" }, h("div", { class: "cover-mark-label" }, "Powered by"), h("img", { src: DEDALO_LOGO, alt: APP_NAME }))
+      h(
+        "div",
+        { class: "cover-mark" },
+        h("div", { class: "cover-mark-label" }, "Powered by"),
+        h("img", { src: DEDALO_LOGO, alt: APP_NAME }),
+        // A real anchor, not a line of text that looks like one: the browser's own print turns
+        // it into a link annotation in the PDF, so the address is both clickable there and
+        // readable on paper.
+        h("a", { class: "cover-mark-link", href: APP_URL, target: "_blank", rel: "noreferrer" }, APP_URL_TEXT)
+      )
     );
   }
   function signatureTables(signatories) {
